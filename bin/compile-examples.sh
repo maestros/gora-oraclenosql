@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Licensed to the Apache Software Foundation (ASF) under one or more
 # contributor license agreements.  See the NOTICE file distributed with
 # this work for additional information regarding copyright ownership.
@@ -13,22 +15,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-*~
-.idea
-*.iml
-*.iws
-*.ipr
-.classpath
-.externalToolBuilders
-.project
-.settings
-.git
-.svn
-build
-target
-dist
-lib
-**/lib/*.jar
-ivy/ivy*.jar
-/conf/*-site.xml
-**/conf/*-site.xml
+# resolve links - $0 may be a softlink
+THIS="$0"
+while [ -h "$THIS" ]; do
+  ls=`ls -ld "$THIS"`
+  link=`expr "$ls" : '.*-> \(.*\)$'`
+  if expr "$link" : '.*/.*' > /dev/null; then
+    THIS="$link"
+  else
+    THIS=`dirname "$THIS"`/"$link"
+  fi
+done
+
+# some directories
+THIS_DIR=`dirname "$THIS"`
+GORA_HOME=`cd "$THIS_DIR/.." ; pwd`
+
+MODULE=gora-core
+DIR=$GORA_HOME/$MODULE/src/examples/avro/
+OUTDIR=$GORA_HOME/$MODULE/src/examples/java
+GORA_BIN=$GORA_HOME/bin/gora
+
+for f in `ls $DIR` ; do
+  echo "Compiling $DIR$f"
+  $GORA_BIN compile $DIR$f $OUTDIR 
+done
+
