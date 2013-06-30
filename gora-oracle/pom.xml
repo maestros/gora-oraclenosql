@@ -27,21 +27,21 @@
     <artifactId>gora-oracle</artifactId>
     <packaging>bundle</packaging>
 
-    <name>Apache Gora :: Hbase</name>
+    <name>Apache Gora :: Oracle</name>
         <url>http://gora.apache.org</url>
     <description>The Apache Gora open source framework provides an in-memory data model and 
     persistence for big data. Gora supports persisting to column stores, key value stores, 
     document stores and RDBMSs, and analyzing the data with extensive Apache Hadoop MapReduce 
     support.</description>
-    <inceptionYear>2010</inceptionYear>
+    <inceptionYear>2013</inceptionYear>
     <organization>
     	<name>The Apache Software Foundation</name>
     	<url>http://www.apache.org/</url>
     </organization>
     <scm>
-    	<url>http://svn.apache.org/viewvc/gora/trunk/gora-hbase/</url>
-    	<connection>scm:svn:http://svn.apache.org/repos/asf/gora/trunk/gora-hbase/</connection>
-    	<developerConnection>scm:svn:https://svn.apache.org/repos/asf/gora/trunk/gora-hbase/</developerConnection>
+    	<url>http://svn.apache.org/viewvc/gora/trunk/gora-oracle/</url>
+    	<connection>scm:svn:http://svn.apache.org/repos/asf/gora/trunk/gora-oracle/</connection>
+    	<developerConnection>scm:svn:https://svn.apache.org/repos/asf/gora/trunk/gora-oracle/</developerConnection>
     </scm>
     <issueManagement>
     	<system>JIRA</system>
@@ -54,7 +54,7 @@
 
     <properties>
         <osgi.import>*</osgi.import>
-        <osgi.export>org.apache.gora.hbase*;version="${project.version}";-noimport:=true</osgi.export>
+        <osgi.export>org.apache.gora.oracle*;version="${project.version}";-noimport:=true</osgi.export>
     </properties>
 
     <build>
