@@ -32,6 +32,7 @@ lib
 ivy/ivy*.jar
 /conf/*-site.xml
 **/conf/*-site.xml
+<<<<<<< HEAD
 
 # Packages #
 ############
@@ -62,3 +63,5 @@ ivy/ivy*.jar
 Icon?
 ehthumbs.db
 Thumbs.db
+=======
+>>>>>>> d173a80bd2147c6d771e2272035a39dde1b4b227
