@@ -577,10 +577,7 @@
         <module>gora-cassandra</module>
         <module>gora-solr</module>
         <module>gora-dynamodb</module>
-<<<<<<< HEAD
         <module>gora-oracle</module>
-=======
->>>>>>> d173a80bd2147c6d771e2272035a39dde1b4b227
         <!--module>gora-sql</module-->
         <module>gora-tutorial</module>
         <module>sources-dist</module>
@@ -736,7 +733,6 @@
             <version>${project.version}</version>
             <type>test-jar</type>
           </dependency>
-<<<<<<< HEAD
 
             <dependency>
                 <groupId>org.apache.gora</groupId>
