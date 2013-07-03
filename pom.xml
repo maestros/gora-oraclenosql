@@ -746,9 +746,6 @@
                 <type>test-jar</type>
             </dependency>
 
-=======
-  
->>>>>>> d173a80bd2147c6d771e2272035a39dde1b4b227
           <!-- Avro needs this version of jackson -->
           <dependency>
             <groupId>org.codehaus.jackson</groupId>
