@@ -41,4 +41,287 @@ public class TestOracleStore extends DataStoreTestBase {
     protected DataStore<String, WebPage> createWebPageDataStore() throws IOException {
         return null;
     }
+
+    @Ignore
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void tearDown() throws Exception {
+        super.tearDown();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testNewInstance() throws IOException, Exception {
+        super.testNewInstance();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testCreateSchema() throws Exception {
+        super.testCreateSchema();
+    }
+
+    @Ignore
+    @Override
+    public void assertSchemaExists(String schemaName) throws Exception {
+        super.assertSchemaExists(schemaName);
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testAutoCreateSchema() throws Exception {
+        super.testAutoCreateSchema();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void assertAutoCreateSchema() throws Exception {
+        super.assertAutoCreateSchema();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testTruncateSchema() throws Exception {
+        super.testTruncateSchema();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testDeleteSchema() throws IOException, Exception {
+        super.testDeleteSchema();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testSchemaExists() throws Exception {
+        super.testSchemaExists();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testPut() throws IOException, Exception {
+        super.testPut();
+    }
+
+    @Ignore
+    @Override
+    public void assertPut(Employee employee) throws IOException {
+        super.assertPut(employee);
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testPutNested() throws IOException, Exception {
+        super.testPutNested();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testPutArray() throws IOException, Exception {
+        super.testPutArray();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void assertPutArray() throws IOException {
+        super.assertPutArray();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testPutBytes() throws IOException, Exception {
+        super.testPutBytes();
+    }
+
+    @Ignore
+    @Override
+    public void assertPutBytes(byte[] contentBytes) throws IOException {
+        super.assertPutBytes(contentBytes);
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testPutMap() throws IOException, Exception {
+        super.testPutMap();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void assertPutMap() throws IOException {
+        super.assertPutMap();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testUpdate() throws IOException, Exception {
+        super.testUpdate();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testEmptyUpdate() throws IOException, Exception {
+        super.testEmptyUpdate();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testGet() throws IOException, Exception {
+        super.testGet();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testGetRecursive() throws IOException, Exception {
+        super.testGetRecursive();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testGetDoubleRecursive() throws IOException, Exception {
+        super.testGetDoubleRecursive();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testGetNested() throws IOException, Exception {
+        super.testGetNested();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testGet3UnionField() throws IOException, Exception {
+        super.testGet3UnionField();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testGetWithFields() throws IOException, Exception {
+        super.testGetWithFields();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testGetWebPage() throws IOException, Exception {
+        super.testGetWebPage();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testGetWebPageDefaultFields() throws IOException, Exception {
+        super.testGetWebPageDefaultFields();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testGetNonExisting() throws Exception, Exception {
+        super.testGetNonExisting();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testQuery() throws IOException, Exception {
+        super.testQuery();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testQueryStartKey() throws IOException, Exception {
+        super.testQueryStartKey();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testQueryEndKey() throws IOException, Exception {
+        super.testQueryEndKey();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testQueryKeyRange() throws IOException, Exception {
+        super.testQueryKeyRange();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testQueryWebPageSingleKey() throws IOException, Exception {
+        super.testQueryWebPageSingleKey();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testQueryWebPageSingleKeyDefaultFields() throws IOException, Exception {
+        super.testQueryWebPageSingleKeyDefaultFields();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testQueryWebPageQueryEmptyResults() throws IOException, Exception {
+        super.testQueryWebPageQueryEmptyResults();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testDelete() throws IOException, Exception {
+        super.testDelete();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testDeleteByQuery() throws IOException, Exception {
+        super.testDeleteByQuery();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testDeleteByQueryFields() throws IOException, Exception {
+        super.testDeleteByQueryFields();
+    }
+
+    @Test
+    @Ignore
+    @Override
+    public void testGetPartitions() throws IOException, Exception {
+        super.testGetPartitions();
+    }
 }
