@@ -73,6 +73,14 @@
             <!--targetPath>${project.basedir}/target/classes/</targetPath-->
           </testResource>
         </testResources>
+	    <resources>
+	      <resource>
+	        <directory>lib-ext</directory>
+	        <includes>
+              <include>**/*</include>
+            </includes>
+		   </resource>
+		</resources>
         <plugins>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -96,6 +104,15 @@
     </build>
 
     <dependencies>
+	
+        <dependency>
+            <groupId>oracle.kv</groupId>
+            <artifactId>oracle-kvclient</artifactId>
+            <version>2.0.39</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib-ext/kvclient.jar</systemPath>
+        </dependency>
+
         <!-- Gora Internal Dependencies -->
         <dependency>
             <groupId>org.apache.gora</groupId>
