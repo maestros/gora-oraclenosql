@@ -31,7 +31,7 @@ import oracle.kv.KVStoreFactory;
 import oracle.kv.KVStoreConfig;
 
 /**
- *
+ * @author Apostolos Giannakidis
  */
 public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> {
 
