@@ -5,23 +5,37 @@ import org.apache.gora.persistency.Persistent;
 import org.apache.gora.store.DataStore;
 import org.apache.gora.util.GoraException;
 import org.apache.gora.oracle.store.OracleStore;
+
+import java.io.IOException;
 import java.util.Properties;
 
+import org.junit.After;
+import org.junit.Before;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import oracle.kv.KVStore;
+import oracle.kv.KVStoreFactory;
+import oracle.kv.KVStoreConfig;
+
 /**
- * User: apostolosgiannakidis
+ * Author: Apostolos Giannakidis
  * Date: 7/3/13
  * Time: 6:16 AM
- * To change this template use File | Settings | File Templates.
  */
 public class GoraOracleTestDriver extends GoraTestDriver {
 
     private static Logger log = LoggerFactory.getLogger(GoraOracleTestDriver.class);
+    private static String storeName = "kvstore";
+    private static String hostName = "localhost";
+    private static String hostPort = "5000";
+
+    private KVStore kvstore;    // reference to the kvstore
+
+    Process proc;   // reference to the kvstore process
 
     /**
-     * Constructor for this class.
+     * Constructor
      */
     public GoraOracleTestDriver() {
         super(OracleStore.class);
@@ -30,21 +44,49 @@ public class GoraOracleTestDriver extends GoraTestDriver {
     @Override
     public void setUpClass() throws Exception {
         super.setUpClass();
+        log.info("Initializing Oracle NoSQL.");
+        createDataStore();
     }
 
     @Override
     public void tearDownClass() throws Exception {
         super.tearDownClass();
+
+        if (proc != null) {
+            proc.destroy();
+            proc = null;
+            log.info("Process killed");
+        }
+
+        log.info("Finished DynamoDB driver.");
     }
 
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
-    }
+    /**
+     * Creates the Oracle NoSQL store and returns a specific object
+     * @return
+     * @throws IOException
+     */
+    protected KVStore createDataStore() throws IOException {
+        log.info("createDataStore");
 
-    @Override
-    public void tearDown() throws Exception {
-        super.tearDown();
+        /* Spawn a new process in order to start the Oracle NoSQL service. */
+        proc = Runtime.getRuntime().exec(new String[]{"java","-jar","lib-ext/kv-2.0.39/kvstore.jar", "kvlite"});
+
+        try {
+            Thread.sleep(7000); // sleep for a few seconds in order for the service to be started.
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        kvstore = KVStoreFactory.getStore  // create the data store
+                (new KVStoreConfig(storeName, hostName + ":" + hostPort));
+
+        if (kvstore == null)
+            log.info("KVStore is null");
+        else
+            log.info("KVStore Opened: "+kvstore.toString());
+
+        return kvstore;
     }
 
     @Override
@@ -52,13 +94,4 @@ public class GoraOracleTestDriver extends GoraTestDriver {
         super.setProperties(properties);
     }
 
-    @Override
-    public <K, T extends Persistent> DataStore<K, T> createDataStore(Class<K> keyClass, Class<T> persistentClass) throws GoraException {
-        return super.createDataStore(keyClass, persistentClass);
-    }
-
-    @Override
-    public Class<?> getDataStoreClass() {
-        return super.getDataStoreClass();
-    }
 }

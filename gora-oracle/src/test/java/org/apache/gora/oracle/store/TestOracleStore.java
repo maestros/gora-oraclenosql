@@ -18,31 +18,29 @@
 
 package org.apache.gora.oracle.store;
 
-import oracle.kv.KVStore;
-import oracle.kv.KVStoreConfig;
-import oracle.kv.KVStoreFactory;
 import org.apache.gora.examples.generated.Employee;
 import org.apache.gora.examples.generated.WebPage;
-import org.apache.gora.store.*;
-import org.junit.*;
+import org.apache.gora.oracle.GoraOracleTestDriver;
+import org.apache.gora.store.DataStore;
+import org.apache.gora.store.DataStoreTestBase;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 
 /**
  * Test case for OracleNoSQLStore.
  */
 public class TestOracleStore extends DataStoreTestBase {
 
-    private static String storeName = "kvstore";
-    private static String hostName = "localhost";
-    private static String hostPort = "5000";
+    public static final Logger log = LoggerFactory.getLogger(TestOracleStore.class);
 
-    private KVStore kvstore;
-
-	Process proc;
+    static {
+        setTestDriver(new GoraOracleTestDriver());
+    }
 
     @Deprecated
     @Override
@@ -56,22 +54,13 @@ public class TestOracleStore extends DataStoreTestBase {
         return null;
     }
 
+    public GoraOracleTestDriver getTestDriver() {
+        return (GoraOracleTestDriver) testDriver;
+    }
+
     @Override
     public void setUp() throws Exception {
-    //    super.setUp();
-        System.out.println("setup");
-		proc = Runtime.getRuntime().exec(new String[]{"java","-jar","lib-ext/kv-2.0.39/kvstore.jar", "kvlite"});
-
-        Thread.sleep(7000);
-
-        kvstore = KVStoreFactory.getStore
-                (new KVStoreConfig(storeName, hostName + ":" + hostPort));
-
-			if (kvstore==null)
-		            System.out.println("KVStore is null");
-		        else
-		            System.out.println("Opened: "+kvstore.toString());
-
+        super.setUp();
     }
 
     @Test
@@ -83,8 +72,6 @@ public class TestOracleStore extends DataStoreTestBase {
     @Override
     public void tearDown() throws Exception {
         super.tearDown();
-		proc.destroy();
-        System.out.println("Process killed");
     }
 
     @Test
