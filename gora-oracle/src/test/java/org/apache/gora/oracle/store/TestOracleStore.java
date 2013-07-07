@@ -18,17 +18,31 @@
 
 package org.apache.gora.oracle.store;
 
+import oracle.kv.KVStore;
+import oracle.kv.KVStoreConfig;
+import oracle.kv.KVStoreFactory;
 import org.apache.gora.examples.generated.Employee;
 import org.apache.gora.examples.generated.WebPage;
 import org.apache.gora.store.*;
 import org.junit.*;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 
 /**
  * Test case for OracleNoSQLStore.
  */
 public class TestOracleStore extends DataStoreTestBase {
+
+    private static String storeName = "kvstore";
+    private static String hostName = "localhost";
+    private static String hostPort = "5000";
+
+    private KVStore kvstore;
+
+	Process proc;
 
     @Deprecated
     @Override
@@ -42,17 +56,35 @@ public class TestOracleStore extends DataStoreTestBase {
         return null;
     }
 
-    @Ignore
     @Override
     public void setUp() throws Exception {
-        super.setUp();
+    //    super.setUp();
+        System.out.println("setup");
+		proc = Runtime.getRuntime().exec(new String[]{"java","-jar","lib-ext/kv-2.0.39/kvstore.jar", "kvlite"});
+
+        Thread.sleep(7000);
+
+        kvstore = KVStoreFactory.getStore
+                (new KVStoreConfig(storeName, hostName + ":" + hostPort));
+
+			if (kvstore==null)
+		            System.out.println("KVStore is null");
+		        else
+		            System.out.println("Opened: "+kvstore.toString());
+
     }
 
     @Test
-    @Ignore
+    public void dummyTest() throws Exception {
+        System.out.println("dummyTest");
+    }
+
+
     @Override
     public void tearDown() throws Exception {
         super.tearDown();
+		proc.destroy();
+        System.out.println("Process killed");
     }
 
     @Test
@@ -60,7 +92,7 @@ public class TestOracleStore extends DataStoreTestBase {
     @Override
     public void testNewInstance() throws IOException, Exception {
         super.testNewInstance();
-    }
+	}
 
     @Test
     @Ignore
