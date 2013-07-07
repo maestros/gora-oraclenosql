@@ -44,7 +44,7 @@ public class GoraOracleTestDriver extends GoraTestDriver {
     @Override
     public void setUpClass() throws Exception {
         super.setUpClass();
-        log.info("Initializing Oracle NoSQL.");
+        log.info("Initializing Oracle NoSQL driver.");
         createDataStore();
     }
 
@@ -58,7 +58,7 @@ public class GoraOracleTestDriver extends GoraTestDriver {
             log.info("Process killed");
         }
 
-        log.info("Finished DynamoDB driver.");
+        log.info("Finished Oracle NoSQL driver.");
     }
 
     /**
