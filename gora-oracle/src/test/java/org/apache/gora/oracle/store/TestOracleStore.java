@@ -22,14 +22,22 @@ import org.apache.gora.examples.generated.Employee;
 import org.apache.gora.examples.generated.WebPage;
 import org.apache.gora.oracle.GoraOracleTestDriver;
 import org.apache.gora.store.DataStore;
+import org.apache.gora.store.DataStoreFactory;
 import org.apache.gora.store.DataStoreTestBase;
-import org.junit.Before;
+import org.apache.hadoop.conf.Configuration;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import oracle.kv.Key;
 
 /**
  * Test case for OracleNoSQLStore.
@@ -37,21 +45,26 @@ import java.io.IOException;
 public class TestOracleStore extends DataStoreTestBase {
 
     public static final Logger log = LoggerFactory.getLogger(TestOracleStore.class);
+    private Configuration conf;
 
     static {
         setTestDriver(new GoraOracleTestDriver());
     }
 
+    @SuppressWarnings("unchecked")
     @Deprecated
     @Override
     protected DataStore<String, Employee> createEmployeeDataStore() throws IOException {
-        return null;
+        return DataStoreFactory.createDataStore(OracleStore.class, String.class,
+                Employee.class, conf);
     }
 
+    @SuppressWarnings("unchecked")
     @Deprecated
     @Override
     protected DataStore<String, WebPage> createWebPageDataStore() throws IOException {
-        return null;
+        return DataStoreFactory.createDataStore(OracleStore.class, String.class,
+                WebPage.class, conf);
     }
 
     public GoraOracleTestDriver getTestDriver() {
@@ -62,12 +75,6 @@ public class TestOracleStore extends DataStoreTestBase {
     public void setUp() throws Exception {
         super.setUp();
     }
-
-    @Test
-    public void dummyTest() throws Exception {
-        System.out.println("dummyTest");
-    }
-
 
     @Override
     public void tearDown() throws Exception {
@@ -163,17 +170,26 @@ public class TestOracleStore extends DataStoreTestBase {
         super.assertPutArray();
     }
 
-    @Test
-    @Ignore
-    @Override
-    public void testPutBytes() throws IOException, Exception {
-        super.testPutBytes();
-    }
-
-    @Ignore
+    /**
+     * Asserts that writing bytes actually works at low level in Oracle NoSQL.
+     * TODO: Check writing null unions too.
+     */
     @Override
     public void assertPutBytes(byte[] contentBytes) throws IOException {
-        super.assertPutBytes(contentBytes);
+
+        ArrayList<String> majorComponents = new ArrayList<String>();
+        ArrayList<String> minorComponents = new ArrayList<String>();
+
+        // Define the major and minor path components for the key
+        majorComponents.add("WebPage");
+        minorComponents.add("com.example/http");
+
+        // Create the key
+        Key myKey = Key.createKey(majorComponents, minorComponents);
+
+        final byte[] actualBytes = getTestDriver().get(myKey);
+        assertNotNull(actualBytes);
+        assertTrue(Arrays.equals(contentBytes, actualBytes));
     }
 
     @Test

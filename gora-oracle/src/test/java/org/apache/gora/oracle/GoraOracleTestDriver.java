@@ -1,27 +1,26 @@
 package org.apache.gora.oracle;
 
+
+import oracle.kv.KVStore;
+import oracle.kv.KVStoreConfig;
+import oracle.kv.KVStoreFactory;
+import oracle.kv.ValueVersion;
+import oracle.kv.Key;
+import oracle.kv.Value;
 import org.apache.gora.GoraTestDriver;
-import org.apache.gora.persistency.Persistent;
-import org.apache.gora.store.DataStore;
-import org.apache.gora.util.GoraException;
 import org.apache.gora.oracle.store.OracleStore;
 
 import java.io.IOException;
 import java.util.Properties;
 
-import org.junit.After;
-import org.junit.Before;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import oracle.kv.KVStore;
-import oracle.kv.KVStoreFactory;
-import oracle.kv.KVStoreConfig;
 
 /**
  * Author: Apostolos Giannakidis
  * Date: 7/3/13
- * Time: 6:16 AM
+ * Driver to set up an embedded MongoDB database instance for use in our
+ * unit tests.
  */
 public class GoraOracleTestDriver extends GoraTestDriver {
 
@@ -29,6 +28,9 @@ public class GoraOracleTestDriver extends GoraTestDriver {
     private static String storeName = "kvstore";
     private static String hostName = "localhost";
     private static String hostPort = "5000";
+
+    //milliseconds to sleep after the server process executes
+    private static final long MILLISTOSLEEP = 8000;
 
     private KVStore kvstore;    // reference to the kvstore
 
@@ -45,6 +47,7 @@ public class GoraOracleTestDriver extends GoraTestDriver {
     public void setUpClass() throws Exception {
         super.setUpClass();
         log.info("Initializing Oracle NoSQL driver.");
+        initOracleNoSQLSever();
         createDataStore();
     }
 
@@ -62,21 +65,40 @@ public class GoraOracleTestDriver extends GoraTestDriver {
     }
 
     /**
+     * Initiate the Oracle NoSQL server on the default port.
+     * Waits 7 seconds
+     * @return
+     * @throws IOException
+     */
+    protected void initOracleNoSQLSever() throws IOException {
+        log.info("initOracleNoSQLSever started");
+
+        proc = null;
+        /* Spawn a new process in order to start the Oracle NoSQL service. */
+        proc = Runtime.getRuntime().exec(new String[]{"java","-jar","lib-ext/kv-2.0.39/kvstore.jar", "kvlite"});
+
+        try {
+            Thread.sleep(MILLISTOSLEEP); // sleep for MILLISTOSLEEP in order for the service to be started.
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        if (proc == null)
+            log.info("Server not started");
+        else
+            log.info("Server started");
+
+        log.info("initOracleNoSQLSever finished");
+    }
+
+
+    /**
      * Creates the Oracle NoSQL store and returns a specific object
      * @return
      * @throws IOException
      */
     protected KVStore createDataStore() throws IOException {
-        log.info("createDataStore");
-
-        /* Spawn a new process in order to start the Oracle NoSQL service. */
-        proc = Runtime.getRuntime().exec(new String[]{"java","-jar","lib-ext/kv-2.0.39/kvstore.jar", "kvlite"});
-
-        try {
-            Thread.sleep(7000); // sleep for a few seconds in order for the service to be started.
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        log.info("createDataStore started");
 
         kvstore = KVStoreFactory.getStore  // create the data store
                 (new KVStoreConfig(storeName, hostName + ":" + hostPort));
@@ -86,12 +108,26 @@ public class GoraOracleTestDriver extends GoraTestDriver {
         else
             log.info("KVStore Opened: "+kvstore.toString());
 
+        log.info("kvstore returned");
         return kvstore;
     }
 
     @Override
     protected void setProperties(Properties properties) {
         super.setProperties(properties);
+    }
+
+    public byte[] get(Key myKey){
+        ValueVersion vv = null;
+
+        vv = kvstore.get(myKey);
+
+        if (vv != null) {
+            Value value = vv.getValue();
+            return value.getValue();
+        }
+        else
+            return null;
     }
 
 }
