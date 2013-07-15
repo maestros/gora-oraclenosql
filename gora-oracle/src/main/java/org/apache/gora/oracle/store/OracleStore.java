@@ -40,6 +40,8 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
     private static String hostName = "localhost";
     private static String hostPort = "5000";
 
+    private volatile OracleMapping mapping;
+
     private KVStore kvstore;
 
     @Override
