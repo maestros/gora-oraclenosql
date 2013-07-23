@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Author: Apostolos Giannakidis
  * Date: 7/3/13
- * Driver to set up an embedded MongoDB database instance for use in our
+ * Driver to set up an embedded Oracle database instance for use in our
  * unit tests.
  */
 public class GoraOracleTestDriver extends GoraTestDriver {
@@ -30,9 +30,9 @@ public class GoraOracleTestDriver extends GoraTestDriver {
     private static String hostPort = "5000";
 
     //milliseconds to sleep after the server process executes
-    private static final long MILLISTOSLEEP = 8000;
+    private final long MILLISTOSLEEP = 8000;
 
-    private KVStore kvstore;    // reference to the kvstore
+    private static KVStore kvstore;    // reference to the kvstore
 
     Process proc;   // reference to the kvstore process
 
@@ -48,7 +48,7 @@ public class GoraOracleTestDriver extends GoraTestDriver {
         super.setUpClass();
         log.info("Initializing Oracle NoSQL driver.");
         initOracleNoSQLSever();
-        createDataStore();
+        createKVStore();
     }
 
     @Override
@@ -70,8 +70,11 @@ public class GoraOracleTestDriver extends GoraTestDriver {
      * @return
      * @throws IOException
      */
-    protected void initOracleNoSQLSever() throws IOException {
+    private void initOracleNoSQLSever() throws IOException {
         log.info("initOracleNoSQLSever started");
+
+        if (proc != null)
+            proc.destroy();
 
         proc = null;
         /* Spawn a new process in order to start the Oracle NoSQL service. */
@@ -97,16 +100,25 @@ public class GoraOracleTestDriver extends GoraTestDriver {
      * @return
      * @throws IOException
      */
-    protected KVStore createDataStore() throws IOException {
-        log.info("createDataStore started");
+    private KVStore createKVStore() throws IOException {
+        log.info("createKVStore started");
 
-        kvstore = KVStoreFactory.getStore  // create the data store
+        if (kvstore!=null){
+            log.info("kvstore was not null. Closing the kvstore...");
+            kvstore.close();
+            kvstore=null;
+        }
+
+        log.info("storeName:"+storeName+", host:"+hostName+":"+hostPort);
+
+
+        kvstore = KVStoreFactory.getStore  // create the kv store
                 (new KVStoreConfig(storeName, hostName + ":" + hostPort));
 
         if (kvstore == null)
-            log.info("KVStore is null");
+            log.error("KVStore was not opened");
         else
-            log.info("KVStore Opened: "+kvstore.toString());
+            log.info("KVStore opened: "+kvstore.toString());
 
         log.info("kvstore returned");
         return kvstore;
@@ -128,6 +140,10 @@ public class GoraOracleTestDriver extends GoraTestDriver {
         }
         else
             return null;
+    }
+
+    public KVStore getKvstore(){
+        return kvstore;
     }
 
 }
