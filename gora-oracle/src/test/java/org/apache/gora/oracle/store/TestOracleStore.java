@@ -18,6 +18,7 @@
 
 package org.apache.gora.oracle.store;
 
+import oracle.kv.Value;
 import org.apache.gora.examples.generated.Employee;
 import org.apache.gora.examples.generated.WebPage;
 import org.apache.gora.oracle.GoraOracleTestDriver;
@@ -87,6 +88,24 @@ public class TestOracleStore extends DataStoreTestBase {
     public void testNewInstance() throws IOException, Exception {
         super.testNewInstance();
 	}
+
+    public void populateTestSchema() {
+
+        String[] keyPathStrings = {"Employee",
+                                   "Employee/1",
+                                   "Employee/1/-/info",
+                                   "Employee/1/-/info/fullname",
+                                   "Employee/2",
+                                   "Employee/2/-/info",
+                                   "Employee/2/-/info/fullname",
+                                   "Webpage"};
+
+        for(String keyPathString : keyPathStrings){
+            System.out.println(keyPathString);
+            Key fullKey = Key.fromString(keyPathString);
+            getTestDriver().getKvstore().put(fullKey, Value.EMPTY_VALUE);
+        }
+    }
 
     @Test
     @Ignore
@@ -176,6 +195,8 @@ public class TestOracleStore extends DataStoreTestBase {
      */
     @Override
     public void assertPutBytes(byte[] contentBytes) throws IOException {
+
+        log.info("assertPutBytes was called");
 
         ArrayList<String> majorComponents = new ArrayList<String>();
         ArrayList<String> minorComponents = new ArrayList<String>();
