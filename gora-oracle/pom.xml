@@ -66,7 +66,7 @@
         <sourceDirectory>src/main/java</sourceDirectory>
         <testResources>
           <testResource>
-            <directory>${project.basedir}/src/test/conf</directory>
+            <directory>${project.basedir}/src/test/resources</directory>
             <includes>
               <include>**/*</include>
             </includes>
@@ -135,6 +135,11 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jdom</groupId>
+            <artifactId>jdom</artifactId>
         </dependency>
 
         <dependency>
