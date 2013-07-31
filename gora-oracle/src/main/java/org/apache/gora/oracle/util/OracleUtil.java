@@ -71,7 +71,7 @@ public class OracleUtil{
             byteArrayValue = os.toByteArray();
 
           //This is where the problem happens!!
-          //  byteArrayValue = Arrays.copyOfRange(byteArrayValue, 2, byteArrayValue.length);
+            byteArrayValue = Arrays.copyOfRange(byteArrayValue, 2, byteArrayValue.length);
 
             os.close();
           } catch (IOException e) {

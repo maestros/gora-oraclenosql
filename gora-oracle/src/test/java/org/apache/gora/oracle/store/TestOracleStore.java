@@ -246,7 +246,7 @@ public class TestOracleStore extends DataStoreTestBase {
 
     assertNotNull(actualBytes);
     assertTrue(Arrays.equals(contentBytes, actualBytes));
-
+    /*
     log.info("assert null");
 
     WebPage page = webPageStore.get("com.example/http") ;
@@ -257,7 +257,7 @@ public class TestOracleStore extends DataStoreTestBase {
     webPageStore = testDriver.createDataStore(String.class, WebPage.class);
     page = webPageStore.get("com.example/http") ;
     assertNull(page.getContent()) ;
-
+           */
   }
 
   @Test
