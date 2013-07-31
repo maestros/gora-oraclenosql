@@ -35,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -225,39 +226,50 @@ public class TestOracleStore extends DataStoreTestBase {
 
   /**
    * Asserts that writing bytes actually works.
-   * TODO: Check writing null unions too.
+   * It also checks the cases of empty bytes and null; this is
+   * because of the union type of WebPage.content avro schema.
    */
   @Override
   public void assertPutBytes(byte[] contentBytes) throws IOException {
 
-    log.info("assertPutBytes was called");
-
-    String fields[] = {"content"};
-
-   // final byte[] actualBytes = webPageStore.get("com.example/http/",fields).getContent().array();
-
+    // set the major key components for retrieval of the correct record
     List<String> majorComponents = new ArrayList<String>();
     majorComponents.add("WebPage");
     majorComponents.add("com.example");
     majorComponents.add("http");
 
-    //get the actualBytes directly from the Oracle NoSQL
-    final byte[] actualBytes = getTestDriver().getKvstore().get(Key.createKey(majorComponents, "content")).getValue().getValue();
+    byte[] actualBytes; //byte array to store the retrieved bytes
 
+    //get the actualBytes directly from the Oracle NoSQL database
+    actualBytes = getTestDriver().get(Key.createKey(majorComponents, "content"));
+
+    /* check that the contentBytes (provided by the testPutBytes())
+     * is equal to the actualBytes (retrieved directly from the database).
+     */
     assertNotNull(actualBytes);
     assertTrue(Arrays.equals(contentBytes, actualBytes));
-    /*
-    log.info("assert null");
 
+    // check the case of null content
     WebPage page = webPageStore.get("com.example/http") ;
     page.setContent(null) ;
     webPageStore.put("com.example/http", page) ;
     webPageStore.close() ;
-
     webPageStore = testDriver.createDataStore(String.class, WebPage.class);
     page = webPageStore.get("com.example/http") ;
     assertNull(page.getContent()) ;
-           */
+
+    //get the actualBytes directly from the Oracle NoSQL database
+    actualBytes = getTestDriver().get(Key.createKey(majorComponents, "content"));
+    assertNull(actualBytes) ;
+
+    // check the case of an empty string content
+    page = webPageStore.get("com.example/http") ;
+    page.setContent(ByteBuffer.wrap("".getBytes())) ;
+    webPageStore.put("com.example/http", page) ;
+    webPageStore.close() ;
+    webPageStore = testDriver.createDataStore(String.class, WebPage.class);
+    page = webPageStore.get("com.example/http") ;
+    assertTrue(Arrays.equals("".getBytes(),page.getContent().array())) ;
   }
 
   @Test

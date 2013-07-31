@@ -63,25 +63,27 @@ public class OracleUtil{
           break;
         case RECORD: break;
         case UNION:
+       /*   LOG.info("create value before="+new String(((ByteBuffer) value).array()));
           SpecificDatumWriter writer = new SpecificDatumWriter(fieldSchema);
           ByteArrayOutputStream os = new ByteArrayOutputStream();
           BinaryEncoder encoder = new BinaryEncoder(os);
 
           try {
-            writer.write(value, encoder);
+            writer.write(((ByteBuffer) value), encoder);
             encoder.flush();
             byteArrayValue = os.toByteArray();
 
           //This is where the problem happens!!
-            byteArrayValue = Arrays.copyOfRange(byteArrayValue, 2, byteArrayValue.length);
+         //   byteArrayValue = Arrays.copyOfRange(byteArrayValue, 2, byteArrayValue.length);
 
             os.close();
           } catch (IOException e) {
             e.printStackTrace();
           }
-
-          LOG.info("Create value:"+ new String(byteArrayValue));
-          returnValue = Value.createValue( new String(byteArrayValue).getBytes() ) ;
+       */
+          LOG.info("Create value:"+ new String(((ByteBuffer) value).array()));
+      //    returnValue = Value.createValue(byteArrayValue) ;
+          returnValue = Value.createValue(((ByteBuffer) value).array());
           break;
       }
 

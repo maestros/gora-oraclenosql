@@ -464,7 +464,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
     LOG.info("newInstance");
     T persistent = newPersistent();
     StateManager stateManager = persistent.getStateManager();
-
+    ByteBuffer bb;
     Set<String> fieldsSet = new HashSet<String>();
     Collections.addAll(fieldsSet, fields);
 
@@ -487,15 +487,19 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
       switch (persistentField.schema().getType()){
         case BYTES:
           LOG.info("Bytes");
-          ByteBuffer bb = ByteBuffer.wrap(val);
+          bb = ByteBuffer.wrap(val);
           persistent.put(persistentField.pos(),  ByteBuffer.wrap(val));
-          //setField(persistent, persistentField, (ByteBuffer) bb ).array());
           break;
         case RECORD:
+          break;
         case UNION:
+          /*
           SpecificDatumReader reader = new SpecificDatumReader(persistentField.schema());
-          BinaryDecoder decoder = DecoderFactory.defaultFactory().createBinaryDecoder(val, null);
+          BinaryDecoder decoder = DecoderFactory.defaultFactory().createBinaryDecoder(val, 0, val.length, null);
           persistent.put(persistentField.pos(), reader.read(null, decoder));
+          */
+          bb = ByteBuffer.wrap(val);
+          persistent.put(persistentField.pos(),  ByteBuffer.wrap(val));
           break;
       }
 
