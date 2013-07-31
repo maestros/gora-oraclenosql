@@ -19,6 +19,7 @@
 package org.apache.gora.oracle.store;
 
 import oracle.kv.Key;
+import org.apache.gora.util.GoraException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,16 +35,27 @@ public class OracleMapping {
   Map<String,String> mapping;
 
   Key majorKey;  // Partial major key that serves as a table
-  String tableName; // the name of the key component that is used for persistence of the specific data bean
-  String primaryKey;  // the name of the key component that is used for record identification
-  String className;
-  String keyClass;
+  String tableName; // The name of the key component that is used for persistence of the specific data bean
+  String primaryKey;  // The name of the key component that is used for record identification
+  String className; // The name of the class for the databean
+  String keyClass;  // The type of the key (String in case of Oracle NoSQL)
 
+  /**
+   * Default constructor that initialises the mapping.
+   */
   public OracleMapping() {
     mapping = new HashMap<String,String>();
-    LOG.info("Inside OracleMapping constructor");
+    LOG.info("Inside OracleMapping default constructor");
   }
 
+  /**
+   * Constructor that initialises the mapping based on the arguments.
+   * @param tableName The name of the table that this mapping maps to.
+   * @param primaryKey  The name of the primary key field
+   * @param className The name of the class for the databean
+   * @param keyClass  The type of the key (String in case of Oracle NoSQL)
+   * @param mapping The mapping
+   */
   public OracleMapping(String tableName, String primaryKey, String className,
                        String keyClass, Map<String,String> mapping) {
     this.setTableName(tableName);
@@ -75,6 +87,11 @@ public class OracleMapping {
     mapping.put(field, column);
   }
 
+  /**
+   * Sets the major key for this mapping.
+   * The major key represents the table name.
+   * @param majorKey The string that would be used to set the major key
+   */
   private void setMajorKey(String majorKey) {
 
     List<String> majorKeys = new ArrayList<String>();
@@ -192,27 +209,27 @@ public class OracleMapping {
      * constructs the OracleMapping object.
      * @return A newly constructed mapping.
      */
-    public OracleMapping build() {
+    public OracleMapping build() throws GoraException {
 
       // verify that the name of the table was specified
       if (tableName == null)
-        throw new IllegalStateException("tableName is not specified.");
+        throw new GoraException("tableName is not specified.");
 
       // verify that the primaryKey was specified
       if (primaryKey == null)
-        throw new IllegalStateException("primaryKey is not specified.");
+        throw new GoraException("primaryKey is not specified.");
 
       // verify that the className was specified
       if (className == null)
-        throw new IllegalStateException("className is not specified.");
+        throw new GoraException("className is not specified.");
 
       // verify that the keyClass was specified
       if (keyClass == null)
-        throw new IllegalStateException("keyClass is not specified.");
+        throw new GoraException("keyClass is not specified.");
 
       // verifying that there is at least one mapping entry
       if (mapping.isEmpty())
-        throw new IllegalStateException("No fields specified.");
+        throw new GoraException("No fields specified.");
 
       LOG.info("OracleMappingBuilder.build completed all checks.");
 
