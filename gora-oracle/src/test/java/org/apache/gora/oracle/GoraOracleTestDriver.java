@@ -129,7 +129,6 @@ public class GoraOracleTestDriver extends GoraTestDriver {
     super.setProperties(properties);
   }
 
-  /*
   public byte[] get(Key myKey){
     ValueVersion vv = null;
 
@@ -143,7 +142,6 @@ public class GoraOracleTestDriver extends GoraTestDriver {
       return null;
   }
 
-*/
   public KVStore getKvstore(){
     return kvstore;
   }
