@@ -57,9 +57,11 @@ public class OracleUtil{
       switch (fieldSchema.getType()){
         case BYTES:
           returnValue = Value.createValue(((ByteBuffer) value).array());
+          break;
         case STRING:
           returnValue = Value.createValue( value.toString().getBytes()) ;
-        case RECORD:
+          break;
+        case RECORD: break;
         case UNION:
           SpecificDatumWriter writer = new SpecificDatumWriter(fieldSchema);
           ByteArrayOutputStream os = new ByteArrayOutputStream();
