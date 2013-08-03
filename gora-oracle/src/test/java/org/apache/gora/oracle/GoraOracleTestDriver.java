@@ -1,18 +1,14 @@
 package org.apache.gora.oracle;
 
 
-import oracle.kv.KVStore;
-import oracle.kv.KVStoreConfig;
-import oracle.kv.KVStoreFactory;
-import oracle.kv.ValueVersion;
-import oracle.kv.Key;
-import oracle.kv.Value;
+import oracle.kv.*;
 import org.apache.gora.GoraTestDriver;
 import org.apache.gora.oracle.store.OracleStore;
 
 import java.io.IOException;
 import java.util.Properties;
 
+import org.apache.gora.util.GoraException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +27,9 @@ public class GoraOracleTestDriver extends GoraTestDriver {
 
   //milliseconds to sleep after the server process executes
   private final long MILLISTOSLEEP = 8000;
+
+  //number of times to retry to start the service, in case it fails to start
+  private final int TIMESTORETRY = 3;
 
   private static KVStore kvstore;    // reference to the kvstore
 
@@ -66,7 +65,7 @@ public class GoraOracleTestDriver extends GoraTestDriver {
 
   /**
    * Initiate the Oracle NoSQL server on the default port.
-   * Waits 7 seconds
+   * Waits MILLISTOSLEEP seconds in order for the service to start.
    * @return
    * @throws IOException
    */
@@ -111,12 +110,30 @@ public class GoraOracleTestDriver extends GoraTestDriver {
 
     log.info("storeName:"+storeName+", host:"+hostName+":"+hostPort);
 
+    boolean started = false;
+    for(int i=1;i<=TIMESTORETRY;i++){
 
-    kvstore = KVStoreFactory.getStore  // create the kv store
-            (new KVStoreConfig(storeName, hostName + ":" + hostPort));
+      try {
+        kvstore = KVStoreFactory.getStore  // create the kv store
+                (new KVStoreConfig(storeName, hostName + ":" + hostPort));
 
-    if (kvstore == null)
-      log.error("KVStore was not opened");
+        started = true;
+      }catch (FaultException fe){
+        log.info("Service seems to be down: "+fe.getMessage());
+        log.info("Trying to restart the service. Retry:"+i);
+        initOracleNoSQLSever(); // start the service
+        continue; // and loop again to try to connect
+      }
+
+      if (started)
+        break;
+    }
+
+    if (kvstore == null){
+      log.error("KVStore was not opened.");
+      log.error("Terminated because Oracle NoSQL service cannot be started.");
+      System.exit(-1);
+    }
     else
       log.info("KVStore opened: "+kvstore.toString());
 
