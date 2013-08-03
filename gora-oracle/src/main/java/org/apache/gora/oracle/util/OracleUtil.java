@@ -76,38 +76,54 @@ public class OracleUtil{
           returnValue = Value.createValue( ((ByteBuffer) value).array() );
           break;
         case STRING:
-          LOG.info("Create value:"+ new String(((Utf8) value).getBytes(), UTF8_CHARSET) );
           returnValue = Value.createValue( ((Utf8) value).getBytes() ) ;
           break;
         case MAP:
           byte[] data = null;
-          StatefulMap<Utf8,Utf8> map = (StatefulMap) value;
-          Map<Utf8,Utf8> new_map = new HashMap<Utf8,Utf8>();
-          try {
 
-            Set<?> es = map.states().entrySet();
+          try {
+            Map map = (Map) value;
+            StatefulMap<Utf8,Utf8> new_map = null;
+            Map<Utf8,Utf8> temp_map = new HashMap<Utf8,Utf8>();
+
+            if (map.size()>0) {
+              Set<?> es = map.entrySet();
+              for (Object entry : es) {
+                Utf8 mapKey = (Utf8) ((Map.Entry) entry).getKey();
+                Utf8 mapVal = (Utf8) ((Map.Entry) entry).getValue();
+                temp_map.put(mapKey, mapVal);
+              }
+            }
+
+            StatefulMap<Utf8,Utf8> old_map = (StatefulMap) value;
+
+            Set<?> es = old_map.states().entrySet();
             for (Object entry : es) {
               Utf8 mapKey = (Utf8)((Map.Entry) entry).getKey();
               State state = (State) ((Map.Entry) entry).getValue();
 
               switch (state) {
                 case DIRTY:
+                case CLEAN:
                 case NEW:
-                  new_map.put(mapKey, map.get(mapKey));
+                  temp_map.put(mapKey, old_map.get(mapKey));
+                  break;
+                case DELETED:
+                  temp_map.remove(mapKey);
                   break;
               }
 
             }
 
-            map = new StatefulHashMap<Utf8,Utf8>(new_map);
-            data = IOUtils.serialize( datumWriter, fieldSchema, map );
+            new_map = new StatefulHashMap<Utf8,Utf8>(temp_map);
+
+            data = IOUtils.serialize( datumWriter, fieldSchema, new_map );
+            returnValue = Value.createValue( data ) ;
+
           } catch ( IOException e ) {
             LOG.error(e.getMessage(), e.getStackTrace().toString());
           }
 
-          LOG.info("createValue Map.Size:"+map.size());
-
-          returnValue = Value.createValue( data ) ;
           break;
         case ARRAY:
         case RECORD:
@@ -119,7 +135,6 @@ public class OracleUtil{
           returnValue = Value.createValue( byteArrayValue ) ;
           break;
         case UNION:
-          LOG.info("Create value:"+ new String(((ByteBuffer) value).array()));
           returnValue = Value.createValue(((ByteBuffer) value).array());
           break;
       }

@@ -507,7 +507,6 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
           persistent.put(persistentField.pos(), bb.getInt());
           break;
         case BYTES:
-          LOG.info("Bytes");
           bb = ByteBuffer.wrap(val);
           persistent.put(persistentField.pos(),  bb);
           break;
@@ -518,11 +517,6 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
            v = IOUtils.deserialize((byte[]) val, datumReader, persistentField.schema(), persistent.get(persistentField.pos()));
            Map map = (StatefulHashMap) v;
 
-          if (val==null)
-            LOG.info("val is null");
-
-          LOG.info("newInstance Map.Size:"+map.size());
-
           persistent.put( persistentField.pos(), map );
           break;
         case ARRAY:
@@ -531,65 +525,13 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
           persistent.put( persistentField.pos(), v );
           break;
         case UNION:
-          /*
-          SpecificDatumReader reader = new SpecificDatumReader(persistentField.schema());
-          BinaryDecoder decoder = DecoderFactory.defaultFactory().createBinaryDecoder(val, 0, val.length, null);
-          persistent.put(persistentField.pos(), reader.read(null, decoder));
-          */
           bb = ByteBuffer.wrap(val);
-          persistent.put(persistentField.pos(),  ByteBuffer.wrap(val));
+          persistent.put(persistentField.pos(),  bb);
           break;
       }
 
     }
 
-    /*
-    for (String f : fields) {
-      HBaseColumn col = mapping.getColumn(f);
-      if (col == null) {
-        throw new  RuntimeException("HBase mapping for field ["+ f +"] not found. " +
-                "Wrong gora-hbase-mapping.xml?");
-      }
-      Schema.Field field = fieldMap.get(f);
-      Schema fieldSchema = field.schema();
-      switch(fieldSchema.getType()) {
-        case MAP:
-          NavigableMap<byte[], byte[]> qualMap =
-                  result.getNoVersionMap().get(col.getFamily());
-          if (qualMap == null) {
-            continue;
-          }
-          Schema valueSchema = fieldSchema.getValueType();
-          Map map = new HashMap();
-          for (Map.Entry<byte[], byte[]> e : qualMap.entrySet()) {
-            map.put(new Utf8(Bytes.toString(e.getKey())),
-                    fromBytes(valueSchema, e.getValue()));
-          }
-          setField(persistent, field, map);
-          break;
-        case ARRAY:
-          qualMap = result.getFamilyMap(col.getFamily());
-          if (qualMap == null) {
-            continue;
-          }
-          valueSchema = fieldSchema.getElementType();
-          ArrayList arrayList = new ArrayList();
-          for (Map.Entry<byte[], byte[]> e : qualMap.entrySet()) {
-            arrayList.add(fromBytes(valueSchema, e.getValue()));
-          }
-          ListGenericArray arr = new ListGenericArray(fieldSchema, arrayList);
-          setField(persistent, field, arr);
-          break;
-        default:
-          byte[] val = result.getValue(col.getFamily(), col.getQualifier());
-          if (val == null) {
-            continue;
-          }
-          setField(persistent, field, val);
-          break;
-      }
-    }
-    */
     stateManager.clearDirty(persistent);
     return persistent;
   }
@@ -610,9 +552,10 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
     if (key==null)
       return null;
 
-    /*majorKey stores the table name and
-      the key for the record identification.
-      Will be used to create the Oracle key.
+    /**
+     * majorKey stores the table name and
+     * the key for the record identification.
+     * Will be used to create the Oracle key.
      */
     String majorKey;
     majorKey = mapping.getTableName()+"/"+key;
@@ -688,36 +631,10 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
       else{
         LOG.info("value!=null");
 
-        if (fieldSchema.getType()==Schema.Type.UNION){
-          String test = new String(((ByteBuffer) value).array());
-          LOG.info("put field:"+field.name()+", value:"+test+" to column:"+mapping.getColumn(field.name()));
-        }
-        else if (fieldSchema.getType()==Schema.Type.MAP){
-
-          LOG.info("--put MAP--");
-          /*
-          try {
-            Object v = IOUtils.deserialize((byte[]) value, datumReader, fieldSchema, persistent.get(field.pos()));
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
-          */
-
-          Map test = (StatefulHashMap) value;
-          LOG.info("Map.Size:"+test.size());
-          Iterator it = test.entrySet().iterator();
-          while (it.hasNext()) {
-            Map.Entry pairs = (Map.Entry)it.next();
-            System.out.println(pairs.getKey() + " = " + pairs.getValue());
-          }
-
-        }
-
         // Create the value
         Value oracleValue = OracleUtil.createValue(value, fieldSchema, datumWriter);
 
         OperationFactory of = kvstore.getOperationFactory();
-
 
         opList.add(of.createPut(oracleKey, oracleValue));
       }
