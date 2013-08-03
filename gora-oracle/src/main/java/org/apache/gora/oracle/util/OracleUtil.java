@@ -19,20 +19,29 @@ package org.apache.gora.oracle.util;
 import oracle.kv.Key;
 import oracle.kv.Value;
 import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericArray;
 import org.apache.avro.io.BinaryEncoder;
-import org.apache.avro.specific.SpecificDatumWriter;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.io.Encoder;
+import org.apache.avro.reflect.ReflectData;
+import org.apache.avro.reflect.ReflectDatumWriter;
 import org.apache.avro.util.Utf8;
+import org.apache.gora.avro.PersistentDatumWriter;
+import org.apache.gora.persistency.ListGenericArray;
+import org.apache.gora.persistency.State;
+import org.apache.gora.persistency.StatefulHashMap;
+import org.apache.gora.persistency.StatefulMap;
+import org.apache.gora.util.IOUtils;
+import org.apache.hadoop.io.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class OracleUtil{
 
@@ -41,48 +50,76 @@ public class OracleUtil{
    */
   private static final Logger LOG = LoggerFactory.getLogger(OracleUtil.class);
 
+  private static final Charset UTF8_CHARSET = Charset.forName("UTF-8");
+
   /**
    * Converts a value into an oracle.kv.Value and returns that Value.
    * @param value the value to be converted
    * @return the value as an oracle.kv.Value
    */
-  public static Value createValue(Object value, Schema fieldSchema){
+  public static Value createValue(Object value, Schema fieldSchema, PersistentDatumWriter datumWriter){
     Value returnValue;
 
     if (value!=null){
       returnValue = Value.createValue(value.toString().getBytes());
 
-      byte[] byteArrayValue = {};
+      byte[] byteArrayValue = null;
 
       switch (fieldSchema.getType()){
+        case LONG:
+          returnValue = Value.createValue( ByteBuffer.allocate(8).putLong((Long) value).array() );
+          break;
+        case INT:
+          returnValue = Value.createValue( ByteBuffer.allocate(4).putInt((Integer) value).array() );
+          break;
         case BYTES:
-          returnValue = Value.createValue(((ByteBuffer) value).array());
+          returnValue = Value.createValue( ((ByteBuffer) value).array() );
           break;
         case STRING:
-          returnValue = Value.createValue( value.toString().getBytes()) ;
+          LOG.info("Create value:"+ new String(((Utf8) value).getBytes(), UTF8_CHARSET) );
+          returnValue = Value.createValue( ((Utf8) value).getBytes() ) ;
           break;
-        case RECORD: break;
-        case UNION:
-       /*   LOG.info("create value before="+new String(((ByteBuffer) value).array()));
-          SpecificDatumWriter writer = new SpecificDatumWriter(fieldSchema);
-          ByteArrayOutputStream os = new ByteArrayOutputStream();
-          BinaryEncoder encoder = new BinaryEncoder(os);
-
+        case MAP:
+          byte[] data = null;
+          StatefulMap<Utf8,Utf8> map = (StatefulMap) value;
+          Map<Utf8,Utf8> new_map = new HashMap<Utf8,Utf8>();
           try {
-            writer.write(((ByteBuffer) value), encoder);
-            encoder.flush();
-            byteArrayValue = os.toByteArray();
 
-          //This is where the problem happens!!
-         //   byteArrayValue = Arrays.copyOfRange(byteArrayValue, 2, byteArrayValue.length);
+            Set<?> es = map.states().entrySet();
+            for (Object entry : es) {
+              Utf8 mapKey = (Utf8)((Map.Entry) entry).getKey();
+              State state = (State) ((Map.Entry) entry).getValue();
 
-            os.close();
-          } catch (IOException e) {
-            e.printStackTrace();
+              switch (state) {
+                case DIRTY:
+                case NEW:
+                  new_map.put(mapKey, map.get(mapKey));
+                  break;
+              }
+
+            }
+
+            map = new StatefulHashMap<Utf8,Utf8>(new_map);
+            data = IOUtils.serialize( datumWriter, fieldSchema, map );
+          } catch ( IOException e ) {
+            LOG.error(e.getMessage(), e.getStackTrace().toString());
           }
-       */
+
+          LOG.info("createValue Map.Size:"+map.size());
+
+          returnValue = Value.createValue( data ) ;
+          break;
+        case ARRAY:
+        case RECORD:
+          try {
+            byteArrayValue = IOUtils.serialize(datumWriter, fieldSchema, value);
+          } catch ( IOException e ) {
+            LOG.error( e.getMessage(), e.getStackTrace().toString() );
+          }
+          returnValue = Value.createValue( byteArrayValue ) ;
+          break;
+        case UNION:
           LOG.info("Create value:"+ new String(((ByteBuffer) value).array()));
-      //    returnValue = Value.createValue(byteArrayValue) ;
           returnValue = Value.createValue(((ByteBuffer) value).array());
           break;
       }

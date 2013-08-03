@@ -117,13 +117,6 @@ public class TestOracleStore extends DataStoreTestBase {
     log.info("end: dumpDB");
   }
 
-  @Test
-  @Ignore
-  @Override
-  public void testNewInstance() throws IOException, Exception {
-    super.testNewInstance();
-  }
-
   public void populateTestSchema() {
 
     String[] keyPathStrings = {"/Employee",
@@ -140,19 +133,6 @@ public class TestOracleStore extends DataStoreTestBase {
       Key fullKey = Key.fromString(keyPathString);
       getTestDriver().getKvstore().put(fullKey, Value.EMPTY_VALUE);
     }
-  }
-
-  @Test
-  @Ignore
-  @Override
-  public void testCreateSchema() throws Exception {
-    super.testCreateSchema();
-  }
-
-  @Ignore
-  @Override
-  public void assertSchemaExists(String schemaName) throws Exception {
-    super.assertSchemaExists(schemaName);
   }
 
   @Test
@@ -287,7 +267,6 @@ public class TestOracleStore extends DataStoreTestBase {
   }
 
   @Test
-  @Ignore
   @Override
   public void testUpdate() throws IOException, Exception {
     super.testUpdate();
@@ -301,7 +280,6 @@ public class TestOracleStore extends DataStoreTestBase {
   }
 
   @Test
-  @Ignore
   @Override
   public void testGet() throws IOException, Exception {
     super.testGet();

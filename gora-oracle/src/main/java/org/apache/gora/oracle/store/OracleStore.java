@@ -18,28 +18,37 @@ package org.apache.gora.oracle.store;
 
 import org.apache.avro.Schema;
 import org.apache.avro.io.BinaryDecoder;
+import org.apache.avro.io.DatumReader;
+import org.apache.avro.io.Decoder;
 import org.apache.avro.io.DecoderFactory;
+import org.apache.avro.reflect.ReflectDatumReader;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.util.Utf8;
+import org.apache.gora.avro.PersistentDatumWriter;
+import org.apache.gora.oracle.query.OracleQuery;
 import org.apache.gora.oracle.store.OracleMapping.OracleMappingBuilder;
 import org.apache.gora.oracle.util.OracleUtil;
 
 import oracle.kv.*;
 import org.apache.gora.persistency.ListGenericArray;
 import org.apache.gora.persistency.StateManager;
+import org.apache.gora.persistency.StatefulHashMap;
 import org.apache.gora.persistency.impl.PersistentBase;
 import org.apache.gora.query.PartitionQuery;
 import org.apache.gora.query.Query;
 import org.apache.gora.query.Result;
 import org.apache.gora.store.DataStoreFactory;
 import org.apache.gora.store.impl.DataStoreBase;
+import org.apache.gora.util.IOUtils;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -472,6 +481,9 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
 			/* If fields is null, read all fields */
       String field = getFieldFromKey(entry.getKey());
       if (!fieldsSet.isEmpty() && !fieldsSet.contains(field)) {
+        //if field retrieved is not contained in the the specified field set
+        //then skip this field (thus, do not include it in the new Persistent)
+        LOG.info("field:"+field+" not in fieldset. skipped.");
         continue;
       }
 
@@ -483,14 +495,40 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
       if (val == null) {
         continue;
       }
+      Object v = null;
 
       switch (persistentField.schema().getType()){
+        case LONG:
+          bb = ByteBuffer.wrap(val);
+          persistent.put(persistentField.pos(), bb.getLong());
+          break;
+        case INT:
+          bb = ByteBuffer.wrap(val);
+          persistent.put(persistentField.pos(), bb.getInt());
+          break;
         case BYTES:
           LOG.info("Bytes");
           bb = ByteBuffer.wrap(val);
-          persistent.put(persistentField.pos(),  ByteBuffer.wrap(val));
+          persistent.put(persistentField.pos(),  bb);
           break;
+        case STRING:
+          persistent.put(persistentField.pos(), new Utf8(val));
+          break;
+        case MAP:
+           v = IOUtils.deserialize((byte[]) val, datumReader, persistentField.schema(), persistent.get(persistentField.pos()));
+           Map map = (StatefulHashMap) v;
+
+          if (val==null)
+            LOG.info("val is null");
+
+          LOG.info("newInstance Map.Size:"+map.size());
+
+          persistent.put( persistentField.pos(), map );
+          break;
+        case ARRAY:
         case RECORD:
+          v = IOUtils.deserialize((byte[]) val, datumReader, persistentField.schema(), persistent.get(persistentField.pos()));
+          persistent.put( persistentField.pos(), v );
           break;
         case UNION:
           /*
@@ -557,7 +595,10 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
   }
 
   private static String getFieldFromKey(Key key) {
-    return key.getMinorPath().get(0);
+    List<String> minorPath = key.getMinorPath();
+
+    // get the last minor key (which represents the field)
+    return minorPath.get(minorPath.size() - 1);
   }
 
   @Override
@@ -565,16 +606,18 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
 
     LOG.info("inside get");
 
+    // trivial check for a non-null key
     if (key==null)
       return null;
 
-
+    /*majorKey stores the table name and
+      the key for the record identification.
+      Will be used to create the Oracle key.
+     */
     String majorKey;
-
     majorKey = mapping.getTableName()+"/"+key;
 
     Key myKey = OracleUtil.createKey(majorKey);
-
     LOG.info("Major Key:"+myKey.toString());
 
     SortedMap<Key, ValueVersion> kvResult;
@@ -636,10 +679,11 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
 
       LOG.info("fieldSchema="+fieldSchema.getType());
 
+      // in case the value is null then delete the key
       if (value==null){
         LOG.info("value==null");
         OperationFactory of = kvstore.getOperationFactory();
-        opList.add(of.createDelete(oracleKey));
+        opList.add(of.createDelete(oracleKey)); //delete the key
       }
       else{
         LOG.info("value!=null");
@@ -648,9 +692,29 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
           String test = new String(((ByteBuffer) value).array());
           LOG.info("put field:"+field.name()+", value:"+test+" to column:"+mapping.getColumn(field.name()));
         }
+        else if (fieldSchema.getType()==Schema.Type.MAP){
+
+          LOG.info("--put MAP--");
+          /*
+          try {
+            Object v = IOUtils.deserialize((byte[]) value, datumReader, fieldSchema, persistent.get(field.pos()));
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+          */
+
+          Map test = (StatefulHashMap) value;
+          LOG.info("Map.Size:"+test.size());
+          Iterator it = test.entrySet().iterator();
+          while (it.hasNext()) {
+            Map.Entry pairs = (Map.Entry)it.next();
+            System.out.println(pairs.getKey() + " = " + pairs.getValue());
+          }
+
+        }
 
         // Create the value
-        Value oracleValue = OracleUtil.createValue(value, fieldSchema);
+        Value oracleValue = OracleUtil.createValue(value, fieldSchema, datumWriter);
 
         OperationFactory of = kvstore.getOperationFactory();
 
@@ -678,13 +742,38 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
   @Override
   public Result<K, T> execute(Query<K, T> query) {
     //TODO
+    /*
+        try{
+      //check if query.fields is null
+      query.setFields(getFieldsToQuery(query.getFields()));
+
+      if(query.getStartKey() != null && query.getStartKey().equals(
+          query.getEndKey())) {
+        Get get = new Get(toBytes(query.getStartKey()));
+        addFields(get, query.getFields());
+        addTimeRange(get, query);
+        Result result = table.get(get);
+        return new HBaseGetResult<K,T>(this, query, result);
+      } else {
+        ResultScanner scanner = createScanner(query);
+
+        org.apache.gora.query.Result<K,T> result
+            = new HBaseScannerResult<K,T>(this,query, scanner);
+
+        return result;
+      }
+    }catch(IOException ex){
+      LOG.error(ex.getMessage());
+      LOG.error(ex.getStackTrace().toString());
+      return null;
+    }
+     */
     return null;
   }
 
   @Override
   public Query<K, T> newQuery() {
-    //TODO
-    return null;
+    return new OracleQuery<K, T>(this);
   }
 
   @Override
