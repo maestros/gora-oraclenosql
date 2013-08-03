@@ -472,6 +472,15 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
 
     LOG.info("newInstance");
     T persistent = newPersistent();
+
+    /*
+      if no fields are specified,
+      then retrieve all fields.
+     */
+    if ( fields == null ) {
+      fields = fieldMap.keySet().toArray( new String[fieldMap.size()] );
+    }
+
     StateManager stateManager = persistent.getStateManager();
     ByteBuffer bb;
     Set<String> fieldsSet = new HashSet<String>();
