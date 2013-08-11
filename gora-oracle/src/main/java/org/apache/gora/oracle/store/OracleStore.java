@@ -17,20 +17,13 @@
 package org.apache.gora.oracle.store;
 
 import org.apache.avro.Schema;
-import org.apache.avro.io.BinaryDecoder;
-import org.apache.avro.io.DatumReader;
-import org.apache.avro.io.Decoder;
-import org.apache.avro.io.DecoderFactory;
-import org.apache.avro.reflect.ReflectDatumReader;
-import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.util.Utf8;
-import org.apache.gora.avro.PersistentDatumWriter;
 import org.apache.gora.oracle.query.OracleQuery;
+import org.apache.gora.oracle.query.OracleResult;
 import org.apache.gora.oracle.store.OracleMapping.OracleMappingBuilder;
 import org.apache.gora.oracle.util.OracleUtil;
 
 import oracle.kv.*;
-import org.apache.gora.persistency.ListGenericArray;
 import org.apache.gora.persistency.StateManager;
 import org.apache.gora.persistency.StatefulHashMap;
 import org.apache.gora.persistency.impl.PersistentBase;
@@ -46,9 +39,8 @@ import org.jdom.input.SAXBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
+import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -78,10 +70,12 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
   private static final String STORE_NAME = "gora.oracle.storename";
   private static final String HOST_NAME = "gora.oracle.hostname";
   private static final String HOST_PORT = "gora.oracle.hostport";
+  private static final String PRIMARYKEY_TABLE_NAME = "gora.oracle.primarykey_tablename";
 
   private static final String DEFAULT_STORE_NAME = "kvstore";
   private static final String DEFAULT_HOST_NAME = "localhost";
   private static final String DEFAULT_HOST_PORT = "5000";
+  private static final String DEFAULT_PRIMARYKEY_TABLE_NAME = "PrimaryKeys";
 
   private volatile OracleMapping mapping; //the mapping to the datastore
 
@@ -91,8 +85,9 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
    */
   private static String storeName;  //the name of the oracle kv store
   private static String hostName;   //the name of the host to connect (could be the IP)
-  private static String hostPort;
+  private static String hostPort;   //the port of the oracle kv store to connect to
   private static String mappingFile;  //the filename of the mapping (xml) file
+  private static String primaryKeyTable;  //the name of the table that stores the primary keys
 
   private static int readTimeout;
   private static int openTimeout;
@@ -177,6 +172,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
     storeName = DataStoreFactory.findProperty(properties, this, STORE_NAME, DEFAULT_STORE_NAME);
     hostName = DataStoreFactory.findProperty(properties, this, HOST_NAME, DEFAULT_HOST_NAME);
     hostPort = DataStoreFactory.findProperty(properties, this, HOST_PORT, DEFAULT_HOST_PORT);
+    primaryKeyTable = DataStoreFactory.findProperty(properties, this, PRIMARYKEY_TABLE_NAME, DEFAULT_PRIMARYKEY_TABLE_NAME);
 
     try{
       requestTimeout = Integer.parseInt(DataStoreFactory.findProperty( properties, this, REQUEST_TIMEOUT, String.valueOf(KVStoreConfig.DEFAULT_REQUEST_TIMEOUT)));
@@ -298,6 +294,14 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
 
 
   /**
+   * //TODO the javadoc
+   * @return
+   */
+  public static String getPrimaryKeyTable() {
+    return primaryKeyTable;
+  }
+
+  /**
    * Gets the schema name
    */
   @Override
@@ -305,6 +309,9 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
     return mapping.getTableName();
   }
 
+  /**
+   * //TODO the javadoc
+   */
   @Override
   public void createSchema() {
 
@@ -371,6 +378,9 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
 
   }
 
+  /**
+   * //TODO the javadoc
+   */
   @Override
   public void deleteSchema() {
 
@@ -383,21 +393,32 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
     while (tries<2){
       try {
 
-        /* Efficiently delete a subtree of keys using multiple major keys
-        *
-        * /
-         */
+        // Efficiently delete a subtree of keys using multiple major keys
+
         while (true){
           Iterator<Key> i = kvstore.storeKeysIterator
                   (Direction.UNORDERED, 1, mapping.getMajorKey(),
-                          null, Depth.DESCENDANTS_ONLY);
+                          null, Depth.PARENT_AND_DESCENDANTS);
           if (!i.hasNext()) {
             break;
           }
           Key descendant = Key.createKey(i.next().getMajorPath());
+          LOG.info("Deleting: "+descendant.toString());
           kvstore.multiDelete(descendant, null,
                   Depth.PARENT_AND_DESCENDANTS);
         }
+
+       // while (true){
+          List<String> primaryKeys = new ArrayList<String>();
+          primaryKeys.add(OracleStore.getPrimaryKeyTable());
+          primaryKeys.add(mapping.getTableName());
+
+          Key primary = Key.createKey(primaryKeys);
+          LOG.info("Deleting: "+primary.toString());
+          kvstore.multiDelete(primary, null,
+                  Depth.PARENT_AND_DESCENDANTS);
+       // }
+
         tries=2;
 
       } catch (DurabilityException de) {
@@ -449,6 +470,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
 
       }
     }
+    LOG.info("deleteSchema finished.");
   }
 
   /**
@@ -460,11 +482,13 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
     return kvstore.get(mapping.getMajorKey())!=null ? true : false;
   }
 
-  private void setField(T persistent, Schema.Field field, byte[] val)
-          throws IOException {
-    persistent.put(field.pos(),  ByteBuffer.wrap(val));
-  }
-
+  /**
+   * //TODO the javadoc
+   * @param result
+   * @param fields
+   * @return
+   * @throws IOException
+   */
   public T newInstance(SortedMap<Key, ValueVersion> result, String[] fields)
           throws IOException {
     if(result == null || result.isEmpty())
@@ -498,12 +522,14 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
 
       Schema.Field persistentField = fieldMap.get(field);
 
-      LOG.info("field: "+persistentField.name()+", schema: "+persistentField.schema().getType());
-
       byte[] val = entry.getValue().getValue().getValue();
       if (val == null) {
+        LOG.info("Field: "+field+" was skipped because its value was null.");
         continue;
       }
+
+      LOG.info("field: "+persistentField.name()+", schema: "+persistentField.schema().getType());
+
       Object v = null;
 
       switch (persistentField.schema().getType()){
@@ -523,9 +549,8 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
           persistent.put(persistentField.pos(), new Utf8(val));
           break;
         case MAP:
-           v = IOUtils.deserialize((byte[]) val, datumReader, persistentField.schema(), persistent.get(persistentField.pos()));
-           Map map = (StatefulHashMap) v;
-
+          v = IOUtils.deserialize((byte[]) val, datumReader, persistentField.schema(), persistent.get(persistentField.pos()));
+          Map map = (StatefulHashMap) v;
           persistent.put( persistentField.pos(), map );
           break;
         case ARRAY:
@@ -534,8 +559,8 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
           persistent.put( persistentField.pos(), v );
           break;
         case UNION:
-          bb = ByteBuffer.wrap(val);
-          persistent.put(persistentField.pos(),  bb);
+            bb = ByteBuffer.wrap(val);
+            persistent.put(persistentField.pos(),  bb);
           break;
       }
 
@@ -545,6 +570,11 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
     return persistent;
   }
 
+  /**
+   * //TODO the javadocs
+   * @param key
+   * @return
+   */
   private static String getFieldFromKey(Key key) {
     List<String> minorPath = key.getMinorPath();
 
@@ -552,6 +582,12 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
     return minorPath.get(minorPath.size() - 1);
   }
 
+  /**
+   * //TODO the javadoc
+   * @param key the key of the object
+   * @param fields the fields required in the object. Pass null, to retrieve all fields
+   * @return
+   */
   @Override
   public T get(K key, String[] fields) {
 
@@ -561,16 +597,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
     if (key==null)
       return null;
 
-    /**
-     * majorKey stores the table name and
-     * the key for the record identification.
-     * Will be used to create the Oracle key.
-     */
-    String majorKey;
-    majorKey = mapping.getTableName()+"/"+key;
-
-    Key myKey = OracleUtil.createKey(majorKey);
-    LOG.info("Major Key:"+myKey.toString());
+    Key myKey = OracleUtil.createTableKey((String) key, mapping.getTableName());
 
     SortedMap<Key, ValueVersion> kvResult;
     try {
@@ -592,6 +619,11 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
     return return_object;
   }
 
+  /**
+   * //TODO the javadoc
+   * @param key
+   * @param persistent
+   */
   @Override
   public void put(K key, T persistent) {
 
@@ -612,14 +644,28 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
 
     List<Schema.Field> fields = schema.getFields();
 
+    List<Operation> opList = new ArrayList<Operation>();
+    OperationFactory of = kvstore.getOperationFactory();
+
+    /*
+      Add the key to the list of primary keys, for easy access
+     */
+    List<String> majorComponentsForParent = new ArrayList<String>();
+    majorComponentsForParent.add(OracleStore.getPrimaryKeyTable());
+    majorComponentsForParent.add(mapping.getTableName());
+    Key primaryKey = Key.createKey(majorComponentsForParent, (String) key);
+
+    opList.add(of.createPut(primaryKey, Value.EMPTY_VALUE));
+    LOG.info("Added primary key:"+primaryKey);
+    operations.add(opList);
+    opList = new ArrayList<Operation>();
+
+    //List for majorComponents for the Persistent
     ArrayList<String> majorComponents = new ArrayList<String>();
 
     // Define the major and minor path components for the key
     majorComponents.add(mapping.getTableName());
     majorComponents.add(key.toString());// keys in Oracle NoSQL are strings
-
-    List<Operation> opList = new ArrayList<Operation>();
-
 
     for ( Schema.Field field : fields ) {
       Object value = persistent.get( field.pos() );
@@ -634,7 +680,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
       // in case the value is null then delete the key
       if (value==null){
         LOG.info("value==null");
-        OperationFactory of = kvstore.getOperationFactory();
+        of = kvstore.getOperationFactory();
         opList.add(of.createDelete(oracleKey)); //delete the key
       }
       else{
@@ -642,9 +688,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
 
         // Create the value
         Value oracleValue = OracleUtil.createValue(value, fieldSchema, datumWriter);
-
-        OperationFactory of = kvstore.getOperationFactory();
-
+        of = kvstore.getOperationFactory();
         opList.add(of.createPut(oracleKey, oracleValue));
       }
     }
@@ -653,52 +697,218 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
     operations.add(opList);
   }
 
+  /**
+   * //TODO the javadoc
+   * @return
+   */
+  private String[] getAllPersistentFields(){
+    String[] fields = null;
+    try {
+      Field field = beanFactory.getPersistentClass().getDeclaredField("_ALL_FIELDS");
+      field.setAccessible(true);
+      fields = (String[])field.get(null);
+    } catch (NoSuchFieldException e1) {
+      e1.printStackTrace();
+    } catch (IllegalAccessException e1) {
+      e1.printStackTrace();
+    }
+
+    return fields;
+  }
+
+  /**
+   * //TODO the javadoc
+   * @param key the key of the object
+   * @return
+   */
   @Override
   public boolean delete(K key) {
-    //TODO
-    return false;
+    LOG.info("Inside delete(). Key:"+key);
+    Query<K,T> query = newQuery();
+    query.setKey(key);
+    long rowsDeleted = deleteByQuery(query);
+
+    if (rowsDeleted>1)
+      LOG.warn("Warning: Single key:"+key+" deleted "+rowsDeleted+" records (primary keys).");
+
+    LOG.info("finished deleting.");
+    return  rowsDeleted > 0;
   }
 
+  /**
+   * //TODO the javadoc
+   * @param query matching records to this query will be deleted
+   * @return
+   */
   @Override
   public long deleteByQuery(Query<K, T> query) {
-    //TODO
-    return 0;
+
+    LOG.info("inside deleteByQuery()");
+
+    if (((OracleQuery) query).isExecuted()){
+      LOG.info("query has already been executed.");
+      return 0;
+    }
+
+    List<Operation> opList;
+    OperationFactory of = kvstore.getOperationFactory();
+    Result<K, T> result = this.execute(query);
+    int recordsDeleted = 0;
+
+    try {
+
+      while (result.next()) {
+
+        String[] fields = query.getFields();
+
+        if (fields!=null){
+          LOG.info("deleteByQuery. fields to be deleted:"+fields.length);
+
+          if (Arrays.equals(fields, getAllPersistentFields())){
+            LOG.info("Arrays.equals");
+            //Delete all the fields associated with the persistent
+            //along with its primary key.
+            opList = deleteRecord((String) result.getKey());
+            recordsDeleted++;
+            operations.add(opList);
+          }
+          else{
+            LOG.info("Arrays not equal");
+            opList = new ArrayList<Operation>();
+            for (String field : fields){
+              deleteFieldFromRecord((String) result.getKey(), field, opList);
+              LOG.info("Deleted field:" + field);
+              recordsDeleted++;
+            }
+            operations.add(opList);
+          }
+        }
+        else{
+          LOG.info("fields==null");
+          //Delete all the fields associated with the persistent
+          //along with its primary key.
+          opList = deleteRecord((String) result.getKey());
+          recordsDeleted++;
+          operations.add(opList);
+        }
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    try {
+      result.close();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    LOG.info("recordsDeleted="+recordsDeleted);
+    return recordsDeleted;
   }
 
+  /**
+   * Deletes specific field from a specific persistent object.
+   * To delete the field, it deletes its corresponding  key/value pair.
+   * @param key the key to identify the persistent object.
+   * @param field the name of the field to delete.
+   * @param opList the list of operations in which the delete operation will be added.
+   */
+  public void deleteFieldFromRecord(String key, String field, List<Operation> opList){
+    OperationFactory of = kvstore.getOperationFactory();
+
+
+    List<String> majorKeyComponents = new ArrayList<String>();
+    majorKeyComponents.add(mapping.getTableName());
+    majorKeyComponents.add(key);
+
+    Key oracleKey = OracleUtil.createKey(majorKeyComponents, field);
+
+    LOG.info("Field to be deleted: "+oracleKey.toString());
+    //Delete the field
+    opList.add(of.createDelete(oracleKey));
+  }
+
+  /**
+   * Deletes a persistent object from the Oracle NoSQL database.
+   * It deletes all its fields and the primary key.
+   * @param key the key to retrieve the fields and the primary key
+   * @return a list of Operations to be executed with flush() is called.
+   */
+  public List<Operation> deleteRecord(String key){
+    List<Operation> opList = new ArrayList<Operation>();
+    OperationFactory of = kvstore.getOperationFactory();
+    Key oracleKey = OracleUtil.createTableKey(key, mapping.getTableName());
+    LOG.info("Key to be deleted: "+key.toString());
+    kvstore.multiDelete(oracleKey, null,
+            Depth.PARENT_AND_DESCENDANTS);
+
+    //Delete the primary key
+    List<String> primaryKeyComponents = new ArrayList<String>();
+    primaryKeyComponents.add(OracleStore.getPrimaryKeyTable());
+    primaryKeyComponents.add(mapping.getTableName());
+    oracleKey = Key.createKey(primaryKeyComponents, key);
+    LOG.info("Primary Key to be deleted: "+oracleKey.toString());
+    opList.add(of.createDelete(oracleKey));
+    return opList;
+  }
+
+  /**
+   * Executes the given query and returns the results.
+   * @param query the query to execute.
+   * @return the results as a {@link OracleResult} object.
+   * @throws IOException
+   */
   @Override
   public Result<K, T> execute(Query<K, T> query) {
     //TODO
+
+    LOG.info("inside execute()");
+
+    if (((OracleQuery) query).isExecuted())
+      return ((OracleQuery) query).getResult();
+
+    OracleResult result;
+    String startkey = (String) query.getStartKey();
+    String endkey = (String) query.getEndKey();
+    String setKey = (String) query.getKey();
+
+    LOG.info("startkey="+startkey);
+    LOG.info("endkey="+endkey);
+
     /*
-        try{
-      //check if query.fields is null
-      query.setFields(getFieldsToQuery(query.getFields()));
-
-      if(query.getStartKey() != null && query.getStartKey().equals(
-          query.getEndKey())) {
-        Get get = new Get(toBytes(query.getStartKey()));
-        addFields(get, query.getFields());
-        addTimeRange(get, query);
-        Result result = table.get(get);
-        return new HBaseGetResult<K,T>(this, query, result);
-      } else {
-        ResultScanner scanner = createScanner(query);
-
-        org.apache.gora.query.Result<K,T> result
-            = new HBaseScannerResult<K,T>(this,query, scanner);
-
-        return result;
-      }
-    }catch(IOException ex){
-      LOG.error(ex.getMessage());
-      LOG.error(ex.getStackTrace().toString());
-      return null;
-    }
+      in case startkey == endkey then
+      create a new OracleResult without an iterator
+      in order to retrieve a specific key.
      */
-    return null;
+    if ( (setKey != null) || ((startkey!=null) && (startkey.equals(endkey))) ) {
+      LOG.info("startkey == endkey");
+      result = new OracleResult<K, T>(this, query);
+      ((OracleQuery) query).setResult(result);
+      ((OracleQuery) query).setExecuted(true);
+      return result;
+    }
+
+    Iterator<Key> iter = OracleUtil.getPrimaryKeys(kvstore, query, mapping.getTableName());
+
+    LOG.info("iterating...");
+    while (iter.hasNext())
+      LOG.info("key:"+iter.next().toString());
+
+    iter = OracleUtil.getPrimaryKeys(kvstore, query, mapping.getTableName());
+
+    result = new OracleResult<K, T>(this, query, iter);
+    ((OracleQuery) query).setResult(result);
+    ((OracleQuery) query).setExecuted(true);
+    return result;
   }
 
+  /**
+   * //TODO the javadoc
+   * @return
+   */
   @Override
   public Query<K, T> newQuery() {
+    LOG.info("newQuery called!");
     return new OracleQuery<K, T>(this);
   }
 
@@ -730,26 +940,30 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
         iterOper.remove();
 
       } catch (OperationExecutionException oee) {
-        LOG.info("Some error occurred that prevented the sequence from executing successfully.");
-        LOG.info(oee.getFailedOperationIndex()+" "+oee.getFailedOperationResult());
+        LOG.error("Some error occurred that prevented the sequence from executing successfully.");
+        LOG.error(oee.getFailedOperationIndex() + " " + oee.getFailedOperationResult());
       } catch (DurabilityException de) {
-        LOG.info("The durability guarantee could not be met.");
+        LOG.error("The durability guarantee could not be met.");
       } catch (IllegalArgumentException iae) {
 
-        LOG.info("An operation in the list was null or empty." +
+        LOG.error("An operation in the list was null or empty." +
                 "Or at least one operation operates on a key " +
                 "with a major path component that is different " +
                 "than the others. " +
                 "Or more than one operation uses the same key.");
 
       } catch (RequestTimeoutException rte) {
-        LOG.info("The operation was not completed inside of the default request timeout limit.");
+        LOG.error("The operation was not completed inside of the default request timeout limit.");
       } catch (FaultException fe) {
-        LOG.info("A generic error occurred.");
+        LOG.error("A generic error occurred.");
       }
     }
+    LOG.info("finished flushing");
   }
 
+  /**
+   * //TODO the javadoc
+   */
   @Override
   public void close() {
     flush();

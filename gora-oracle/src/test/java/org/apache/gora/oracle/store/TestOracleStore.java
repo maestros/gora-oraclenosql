@@ -83,19 +83,22 @@ public class TestOracleStore extends DataStoreTestBase {
   public void setUp() throws Exception {
     super.setUp();
 
-    String[] tables = {"Employee", "WebPage"};
+    String[] tables = {"Employee", "WebPage", "PrimaryKeys"};
     dumpDB(tables);
   }
 
   @Override
   public void tearDown() throws Exception {
     super.tearDown();
+    String[] tables = {"Employee", "WebPage", "PrimaryKeys"};
+    dumpDB(tables);
   }
 
   private void dumpDB(String[] tables){
     log.info("start: dumpDB");
     ArrayList<String> majorComponents = new ArrayList<String>();
 
+    int records=0;
     for (String table: tables){
       majorComponents.add(table);
 
@@ -109,99 +112,58 @@ public class TestOracleStore extends DataStoreTestBase {
         KeyValueVersion kvv =  i.next();
 
         log.info(kvv.getKey().toString()+":"+new String(kvv.getValue().getValue()));
+        records++;
       }
 
       majorComponents.remove(table);
     }
 
+    if (records==0)
+      log.info("no records found.");
+
     log.info("end: dumpDB");
   }
 
-  public void populateTestSchema() {
-
-    String[] keyPathStrings = {"/Employee",
-            "/Employee/1",
-            "/Employee/1/-/info",
-            "/Employee/1/-/info/fullname",
-            "/Employee/2",
-            "/Employee/2/-/info",
-            "/Employee/2/-/info/fullname",
-            "/Webpage"};
-
-    for(String keyPathString : keyPathStrings){
-      System.out.println(keyPathString);
-      Key fullKey = Key.fromString(keyPathString);
-      getTestDriver().getKvstore().put(fullKey, Value.EMPTY_VALUE);
-    }
-  }
-
   @Test
-  @Ignore
   @Override
   public void testAutoCreateSchema() throws Exception {
     super.testAutoCreateSchema();
   }
 
   @Test
-  @Ignore
-  @Override
-  public void assertAutoCreateSchema() throws Exception {
-    super.assertAutoCreateSchema();
-  }
-
-  @Test
-  @Ignore
   @Override
   public void testTruncateSchema() throws Exception {
     super.testTruncateSchema();
   }
 
   @Test
-  @Ignore
   @Override
   public void testDeleteSchema() throws IOException, Exception {
     super.testDeleteSchema();
   }
 
   @Test
-  @Ignore
   @Override
   public void testSchemaExists() throws Exception {
     super.testSchemaExists();
   }
 
   @Test
-  @Ignore
   @Override
   public void testPut() throws IOException, Exception {
     super.testPut();
   }
 
-  @Ignore
-  @Override
-  public void assertPut(Employee employee) throws IOException {
-    super.assertPut(employee);
-  }
-
   @Test
-  @Ignore
   @Override
   public void testPutNested() throws IOException, Exception {
     super.testPutNested();
   }
 
   @Test
-  @Ignore
   @Override
   public void testPutArray() throws IOException, Exception {
     super.testPutArray();
-  }
-
-  @Test
-  @Ignore
-  @Override
-  public void assertPutArray() throws IOException {
-    super.assertPutArray();
   }
 
   /**
@@ -253,17 +215,9 @@ public class TestOracleStore extends DataStoreTestBase {
   }
 
   @Test
-  @Ignore
   @Override
   public void testPutMap() throws IOException, Exception {
     super.testPutMap();
-  }
-
-  @Test
-  @Ignore
-  @Override
-  public void assertPutMap() throws IOException {
-    super.assertPutMap();
   }
 
   @Test
@@ -273,7 +227,6 @@ public class TestOracleStore extends DataStoreTestBase {
   }
 
   @Test
-  @Ignore
   @Override
   public void testEmptyUpdate() throws IOException, Exception {
     super.testEmptyUpdate();
@@ -314,98 +267,89 @@ public class TestOracleStore extends DataStoreTestBase {
   }
 
   @Test
-  @Ignore
   @Override
   public void testGetWithFields() throws IOException, Exception {
     super.testGetWithFields();
   }
 
   @Test
-  @Ignore
   @Override
   public void testGetWebPage() throws IOException, Exception {
     super.testGetWebPage();
   }
 
   @Test
-  @Ignore
   @Override
   public void testGetWebPageDefaultFields() throws IOException, Exception {
     super.testGetWebPageDefaultFields();
   }
 
   @Test
-  @Ignore
   @Override
   public void testGetNonExisting() throws Exception, Exception {
     super.testGetNonExisting();
   }
 
   @Test
-  @Ignore
   @Override
   public void testQuery() throws IOException, Exception {
     super.testQuery();
   }
 
   @Test
-  @Ignore
   @Override
   public void testQueryStartKey() throws IOException, Exception {
     super.testQueryStartKey();
   }
 
   @Test
-  @Ignore
   @Override
   public void testQueryEndKey() throws IOException, Exception {
     super.testQueryEndKey();
   }
 
   @Test
-  @Ignore
   @Override
   public void testQueryKeyRange() throws IOException, Exception {
     super.testQueryKeyRange();
   }
 
   @Test
-  @Ignore
   @Override
   public void testQueryWebPageSingleKey() throws IOException, Exception {
     super.testQueryWebPageSingleKey();
   }
 
   @Test
-  @Ignore
   @Override
   public void testQueryWebPageSingleKeyDefaultFields() throws IOException, Exception {
     super.testQueryWebPageSingleKeyDefaultFields();
   }
 
   @Test
-  @Ignore
   @Override
   public void testQueryWebPageQueryEmptyResults() throws IOException, Exception {
     super.testQueryWebPageQueryEmptyResults();
   }
 
   @Test
-  @Ignore
   @Override
   public void testDelete() throws IOException, Exception {
     super.testDelete();
   }
 
   @Test
-  @Ignore
   @Override
   public void testDeleteByQuery() throws IOException, Exception {
     super.testDeleteByQuery();
   }
 
+  /* Until GORA-66 is resolved this test will always fail.
+   * The problem relies on the different semantics of the exclusiveness
+   * of the endKey. We ignore this test for the time being.
+   */
+  @Ignore("skipped until GORA-66 is resolved")
   @Test
-  @Ignore
   @Override
   public void testDeleteByQueryFields() throws IOException, Exception {
     super.testDeleteByQueryFields();

@@ -16,8 +16,7 @@
  */
 package org.apache.gora.oracle.util;
 
-import oracle.kv.Key;
-import oracle.kv.Value;
+import oracle.kv.*;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericArray;
 import org.apache.avro.io.BinaryEncoder;
@@ -27,10 +26,13 @@ import org.apache.avro.reflect.ReflectData;
 import org.apache.avro.reflect.ReflectDatumWriter;
 import org.apache.avro.util.Utf8;
 import org.apache.gora.avro.PersistentDatumWriter;
+import org.apache.gora.oracle.store.OracleMapping;
+import org.apache.gora.oracle.store.OracleStore;
 import org.apache.gora.persistency.ListGenericArray;
 import org.apache.gora.persistency.State;
 import org.apache.gora.persistency.StatefulHashMap;
 import org.apache.gora.persistency.StatefulMap;
+import org.apache.gora.query.Query;
 import org.apache.gora.util.IOUtils;
 import org.apache.hadoop.io.Text;
 import org.slf4j.Logger;
@@ -135,7 +137,12 @@ public class OracleUtil{
           returnValue = Value.createValue( byteArrayValue ) ;
           break;
         case UNION:
-          returnValue = Value.createValue(((ByteBuffer) value).array());
+
+          if (value instanceof ByteBuffer)
+            returnValue = Value.createValue(((ByteBuffer) value).array());
+          else if (value instanceof Utf8)
+            returnValue = Value.createValue( ((Utf8) value).getBytes() ) ;
+
           break;
       }
 
@@ -179,6 +186,18 @@ public class OracleUtil{
     return returnKey;
   }
 
+  public static Key keyFromString(String key)
+  {
+    List<String> majorComponents = new ArrayList<String>();
+    String [] keyComponents = key.split("/");
+
+    for (int i = 0; i < keyComponents.length ; i ++)
+      majorComponents.add(keyComponents[i]);
+
+    return Key.createKey(majorComponents);
+
+  }
+
   public static Key createKey(String fullKey){
 
     if (fullKey==null){
@@ -212,6 +231,77 @@ public class OracleUtil{
     }
 
     return returnKey;
+  }
+
+  public static Iterator<Key> getPrimaryKeys(KVStore kvStore, Query query, String tableName){
+
+    String startkey = (String)query.getStartKey();
+    String endkey = (String)query.getEndKey();
+
+    LOG.info("startkey=" + startkey);
+    LOG.info("endkey=" + endkey);
+    Key primaryKey = OracleUtil.keyFromString(OracleStore.getPrimaryKeyTable()+"/"+tableName);
+    LOG.info("PrimaryKey:" + primaryKey.toString());
+
+    KeyRange keyRange;
+    if ( (startkey==null) && (endkey==null) )
+      keyRange = null;  //in case both keys are null, do not create a keyrange in order to get all keys
+    else
+      keyRange = new KeyRange(startkey, true, endkey, true);
+
+    Iterator<Key> iter = kvStore.multiGetKeysIterator(Direction.FORWARD, 20, primaryKey, keyRange, Depth.CHILDREN_ONLY);
+
+    return iter;
+  }
+
+  public static String createKey(List<String> keyComponents){
+
+    if (keyComponents==null)
+      return "";
+
+    String keyPath = "";
+
+    for(String component : keyComponents){
+      keyPath+="/"+component;
+    }
+
+    return keyPath;
+  }
+  /*
+  public static Key createPrimaryKey(String key){
+    return null;
+  }
+
+  public static Key createPersistentKey(String key, OracleMapping mapping){
+       return null;
+  }
+    */
+
+  public static Key createTableKey(String key, String tableName){
+    /**
+     * majorKey stores the table name and
+     * the key for the record identification.
+     * Will be used to create the Oracle key.
+     */
+    String majorKey;
+
+    if ( !key.startsWith(tableName) )
+      majorKey = tableName+"/"+key;
+    else{
+      if  ( key.startsWith("/") )
+        majorKey = key;
+      else
+        majorKey = "/"+key;
+    }
+
+    LOG.info("majorKey="+majorKey);
+
+    majorKey = majorKey.replace("//"+tableName,"/"+tableName);
+
+    Key myKey = OracleUtil.createKey(majorKey);
+    LOG.info("Key:"+myKey.toString());
+
+    return myKey;
   }
 
 }
