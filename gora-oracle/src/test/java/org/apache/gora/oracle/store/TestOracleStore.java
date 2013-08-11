@@ -21,6 +21,7 @@ package org.apache.gora.oracle.store;
 import oracle.kv.Direction;
 import oracle.kv.KeyValueVersion;
 import oracle.kv.Value;
+import org.apache.avro.util.Utf8;
 import org.apache.gora.examples.generated.Employee;
 import org.apache.gora.examples.generated.WebPage;
 import org.apache.gora.oracle.GoraOracleTestDriver;
@@ -41,11 +42,9 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 import oracle.kv.Key;
+
+import static org.junit.Assert.*;
 
 /**
  * Test case for OracleNoSQLStore.
@@ -353,6 +352,41 @@ public class TestOracleStore extends DataStoreTestBase {
   @Override
   public void testDeleteByQueryFields() throws IOException, Exception {
     super.testDeleteByQueryFields();
+  }
+
+  @Test
+  public void testDeletePersistentObject() throws IOException, Exception {
+
+    OracleStore<String,WebPage> dataStore = (OracleStore)getTestDriver().createDataStore(String.class,WebPage.class);
+
+    WebPage webPage;
+
+    webPage = dataStore.get("www.google.com");
+
+    assertNull(webPage);
+
+    ByteBuffer content = ByteBuffer.wrap("sample content".getBytes());
+
+    webPage = dataStore.newPersistent();
+    webPage.setUrl(new Utf8(("www.google.com")));
+    webPage.setContent(content);
+
+    assertNotNull(webPage);
+
+    dataStore.put(webPage.getUrl().toString(),webPage);
+    dataStore.flush();
+
+    webPage = null;
+
+    webPage = dataStore.get("www.google.com");
+    assertNotNull(webPage);
+    assertArrayEquals(webPage.getContent().array(), content.array());
+
+    dataStore.delete(webPage);
+    dataStore.flush();
+
+    webPage = dataStore.get("www.google.com");
+    assertNull(webPage);
   }
 
   @Test

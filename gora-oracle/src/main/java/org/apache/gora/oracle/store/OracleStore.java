@@ -79,6 +79,8 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
 
   private volatile OracleMapping mapping; //the mapping to the datastore
 
+  private final boolean autoCreateSchema = false;
+
   /*
    * Variables and references to Oracle NoSQL properties
    * and configuration values.
@@ -139,6 +141,10 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
     catch ( IOException e ) {
       LOG.error( e.getMessage() );
       LOG.error( e.getStackTrace().toString() );
+    }
+
+    if(autoCreateSchema) {
+      createSchema();
     }
   }
 
@@ -562,6 +568,8 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
             bb = ByteBuffer.wrap(val);
             persistent.put(persistentField.pos(),  bb);
           break;
+        default:
+          LOG.info("Type not considered: " + persistentField.schema().getType().name());
       }
 
     }
@@ -607,7 +615,10 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
       return null;
     }
 
-    LOG.info("after multiGet: "+kvResult.size());
+    LOG.info("multiGet size: "+kvResult.size());
+
+    if (kvResult.size()==0)
+      return null;
 
     T return_object = null;
     try {
@@ -714,6 +725,52 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
     }
 
     return fields;
+  }
+
+  /**
+   * //TODO the javadoc
+   * @return
+   */
+  private K getKeyFromPersistent(T obj){
+    LOG.info("inside getKeyFromPersistent");
+    K key = null;
+    try {
+      LOG.info("Primary key field:"+mapping.getPrimaryKey());
+      Field field = obj.getClass().getDeclaredField(mapping.getPrimaryKey());
+      field.setAccessible(true);
+      Utf8 primary_key = (Utf8)field.get(obj);
+      key = (K)primary_key.toString();
+    } catch (NoSuchFieldException e1) {
+      e1.printStackTrace();
+    } catch (IllegalAccessException e1) {
+      e1.printStackTrace();
+    }
+
+    return key;
+  }
+
+  /**
+   * Deletes a persistent object from the database.
+   * It deletes all its fields and its primary key.
+   * The object that is deleted is depended on the primary key field
+   * that was specified in the mapping.
+   * @param obj the persistent object to delete
+   * @return true if the object was deleted, false otherwise
+   */
+  public boolean delete(T obj) {
+    LOG.info("Inside delete()");
+
+    K key = getKeyFromPersistent(obj);
+
+    LOG.info("Key:"+key);
+    Query<K,T> query = newQuery();
+    query.setKey(key);
+    long rowsDeleted = deleteByQuery(query);
+
+    if (rowsDeleted>1)
+      LOG.warn("Warning: Single key:"+key+" deleted "+rowsDeleted+" records (primary keys).");
+
+    return rowsDeleted > 0;
   }
 
   /**
@@ -834,7 +891,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
    * @param key the key to retrieve the fields and the primary key
    * @return a list of Operations to be executed with flush() is called.
    */
-  public List<Operation> deleteRecord(String key){
+  private List<Operation> deleteRecord(String key){
     List<Operation> opList = new ArrayList<Operation>();
     OperationFactory of = kvstore.getOperationFactory();
     Key oracleKey = OracleUtil.createTableKey(key, mapping.getTableName());
