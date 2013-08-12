@@ -218,7 +218,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
       LOG.debug("Consistency was set to default.");
     }
 
-    String tmpTimeUnit = DataStoreFactory.findProperty( properties, this, TIME_UNIT, "MILLISECONDS" );
+    String tmpTimeUnit = DataStoreFactory.findProperty( properties, this, TIME_UNIT, "MILLISECONDS");
 
     if (tmpTimeUnit.equals("DAYS"))
       timeUnit = TimeUnit.DAYS;
@@ -253,46 +253,45 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
 
     try {
       SAXBuilder builder = new SAXBuilder();
-      Document doc = builder.build( getClass().getClassLoader().getResourceAsStream( mappingFilename ) );
+      Document doc = builder.build( getClass().getClassLoader().getResourceAsStream(mappingFilename) );
 
-      List<Element> classes = doc.getRootElement().getChildren( "class" );
+      List<Element> classes = doc.getRootElement().getChildren("class");
 
       for ( Element classElement : classes ) {
 
-        if ( classElement.getAttributeValue( "keyClass" ).equals( keyClass.getCanonicalName() )
-                && classElement.getAttributeValue( "name" ).equals( persistentClass.getCanonicalName() ) ) {
+        if ( classElement.getAttributeValue("keyClass").equals( keyClass.getCanonicalName() )
+                && classElement.getAttributeValue("name").equals( persistentClass.getCanonicalName() ) ) {
 
-          String tableName = getSchemaName( classElement.getAttributeValue( "table" ), persistentClass );
+          String tableName = getSchemaName( classElement.getAttributeValue("table"), persistentClass );
           mappingBuilder.setTableName( tableName );
 
-          mappingBuilder.setClassName( classElement.getAttributeValue( "name" ) );
-          mappingBuilder.setKeyClass( classElement.getAttributeValue( "keyClass" ) );
+          mappingBuilder.setClassName( classElement.getAttributeValue("name") );
+          mappingBuilder.setKeyClass( classElement.getAttributeValue("keyClass") );
 
-          Element primaryKeyEl = classElement.getChild( "primarykey" );
+          Element primaryKeyEl = classElement.getChild("primarykey");
 
-          String primaryKeyField = primaryKeyEl.getAttributeValue( "name" );
-          String primaryKeyColumn = primaryKeyEl.getAttributeValue( "column" );
+          String primaryKeyField = primaryKeyEl.getAttributeValue("name");
+          String primaryKeyColumn = primaryKeyEl.getAttributeValue("column");
 
           mappingBuilder.setPrimaryKey( primaryKeyField );
           mappingBuilder.addField( primaryKeyField, primaryKeyColumn );
 
-          List<Element> fields = classElement.getChildren( "field" );
+          List<Element> fields = classElement.getChildren("field");
 
           for ( Element field : fields ) {
-            String fieldName = field.getAttributeValue( "name" );
-            String columnName = field.getAttributeValue( "column" );
+            String fieldName = field.getAttributeValue("name");
+            String columnName = field.getAttributeValue("column");
 
-            mappingBuilder.addField( fieldName, columnName );
+            mappingBuilder.addField(fieldName, columnName);
           }
           break;
         }
-
       }
 
     }
     catch ( Exception ex ) {
       LOG.info("Error in parsing");
-      throw new IOException( ex );
+      throw new IOException(ex);
     }
 
     return mappingBuilder.build();
@@ -300,15 +299,18 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
 
 
   /**
-   * //TODO the javadoc
-   * @return
+   * Gets the name of the table that stores the primary keys.
+   * @return the name of the table that stores the primary keys.
    */
   public static String getPrimaryKeyTable() {
     return primaryKeyTable;
   }
 
   /**
-   * Gets the schema name
+   * Gets the schema name.
+   * In Gora-Oracle datastore semantics, the schema is the table name,
+   * which is in essence the 1st major component of the key.
+   * @return String The schema name.
    */
   @Override
   public String getSchemaName() {
@@ -316,7 +318,13 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
   }
 
   /**
-   * //TODO the javadoc
+   * Creates the optional schema in the datastore
+   * to hold the objects. In essence, this creates the key that
+   * will be used as parent key (table) that will hold the keys
+   * for all the persistent objects.
+   * If the schema is already created previously,
+   * the operation is ignored.
+   * @throws IOException
    */
   @Override
   public void createSchema() {
@@ -349,7 +357,6 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
       } catch (RequestTimeoutException rte) {
         // The operation was not completed inside of the
         // default request timeout limit.
-
         if (tries==1)
           LOG.error( rte.getMessage(), rte.getStackTrace().toString() );
         else {
@@ -362,10 +369,8 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
           tries++;
           continue;
         }
-
       } catch (FaultException fe) {
         // A generic error occurred
-
         if (tries==1)
           LOG.error( fe.getMessage(), fe.getStackTrace().toString() );
         else {
@@ -378,14 +383,15 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
           tries++;
           continue;
         }
-
       }
     }
 
   }
 
   /**
-   * //TODO the javadoc
+   * Deletes all the underlying key/value pairs in the datastore
+   * that holds the objects. After the execution of this method,
+   * no data (key/value pairs) exist in the database.
    */
   @Override
   public void deleteSchema() {
@@ -400,7 +406,6 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
       try {
 
         // Efficiently delete a subtree of keys using multiple major keys
-
         while (true){
           Iterator<Key> i = kvstore.storeKeysIterator
                   (Direction.UNORDERED, 1, mapping.getMajorKey(),
@@ -414,7 +419,6 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
                   Depth.PARENT_AND_DESCENDANTS);
         }
 
-       // while (true){
           List<String> primaryKeys = new ArrayList<String>();
           primaryKeys.add(OracleStore.getPrimaryKeyTable());
           primaryKeys.add(mapping.getTableName());
@@ -423,7 +427,6 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
           LOG.info("Deleting: "+primary.toString());
           kvstore.multiDelete(primary, null,
                   Depth.PARENT_AND_DESCENDANTS);
-       // }
 
         tries=2;
 
@@ -518,7 +521,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
 
     for (Map.Entry<Key, ValueVersion> entry : result.entrySet()) {
 			/* If fields is null, read all fields */
-      String field = getFieldFromKey(entry.getKey());
+      String field = OracleUtil.getFieldFromKey(entry.getKey());
       if (!fieldsSet.isEmpty() && !fieldsSet.contains(field)) {
         //if field retrieved is not contained in the the specified field set
         //then skip this field (thus, do not include it in the new Persistent)
@@ -579,29 +582,17 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
   }
 
   /**
-   * //TODO the javadocs
-   * @param key
-   * @return
-   */
-  private static String getFieldFromKey(Key key) {
-    List<String> minorPath = key.getMinorPath();
-
-    // get the last minor key (which represents the field)
-    return minorPath.get(minorPath.size() - 1);
-  }
-
-  /**
-   * //TODO the javadoc
+   * Returns the object corresponding to the given key.
    * @param key the key of the object
-   * @param fields the fields required in the object. Pass null, to retrieve all fields
-   * @return
+   * @param fields the fields required in the object. Pass null, to retrieve all fields.
+   * @return the Persistent object with the specified fields
    */
   @Override
   public T get(K key, String[] fields) {
 
     LOG.info("inside get");
 
-    // trivial check for a non-null key
+    // trivial check for a null key
     if (key==null)
       return null;
 
@@ -631,9 +622,11 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
   }
 
   /**
-   * //TODO the javadoc
-   * @param key
-   * @param persistent
+   * Inserts the persistent object with the given key. If an
+   * object with the same key already exists it will silently
+   * be replaced.
+   * @param key the key for the new persistent object
+   * @param persistent the persistent object
    */
   @Override
   public void put(K key, T persistent) {
@@ -709,8 +702,9 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
   }
 
   /**
-   * //TODO the javadoc
-   * @return
+   * Helper method that gets all the fields of the persistent object
+   * using reflection.
+   * @return a string array that contains all the fields of the persistent object
    */
   private String[] getAllPersistentFields(){
     String[] fields = null;
@@ -728,8 +722,8 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
   }
 
   /**
-   * //TODO the javadoc
-   * @return
+   * Helper method that gets the key from a Persistent object.
+   * @return the key (K) of the Persistent object.
    */
   private K getKeyFromPersistent(T obj){
     LOG.info("inside getKeyFromPersistent");
@@ -774,9 +768,10 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
   }
 
   /**
-   * //TODO the javadoc
+   * Deletes the persistent object with the given key.
    * @param key the key of the object
-   * @return
+   * @return whether the object was successfully deleted
+   * @throws IOException
    */
   @Override
   public boolean delete(K key) {
@@ -793,9 +788,10 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
   }
 
   /**
-   * //TODO the javadoc
+   * Deletes all the objects matching the query.
    * @param query matching records to this query will be deleted
-   * @return
+   * @return number of deleted records
+   * @throws IOException
    */
   @Override
   public long deleteByQuery(Query<K, T> query) {
@@ -873,7 +869,6 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
   public void deleteFieldFromRecord(String key, String field, List<Operation> opList){
     OperationFactory of = kvstore.getOperationFactory();
 
-
     List<String> majorKeyComponents = new ArrayList<String>();
     majorKeyComponents.add(mapping.getTableName());
     majorKeyComponents.add(key);
@@ -917,8 +912,6 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
    */
   @Override
   public Result<K, T> execute(Query<K, T> query) {
-    //TODO
-
     LOG.info("inside execute()");
 
     if (((OracleQuery) query).isExecuted())
@@ -933,9 +926,9 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
     LOG.info("endkey="+endkey);
 
     /*
-      in case startkey == endkey then
-      create a new OracleResult without an iterator
-      in order to retrieve a specific key.
+     * in case startkey == endkey then
+     * create a new OracleResult without an iterator
+     * in order to retrieve a specific key.
      */
     if ( (setKey != null) || ((startkey!=null) && (startkey.equals(endkey))) ) {
       LOG.info("startkey == endkey");
@@ -960,8 +953,8 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
   }
 
   /**
-   * //TODO the javadoc
-   * @return
+   * Constructs and returns a new OracleQuery.
+   * @return a new Query.
    */
   @Override
   public Query<K, T> newQuery() {
@@ -975,10 +968,13 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
     return null;
   }
 
-
   /**
-   * Executes the accumulated operations to the backend datastore.
+   * Forces the write caches to be flushed. Gora-Oracle NoSQL datastore
+   * optimizes its writing by deferring the actual put / delete operations
+   * until this moment.
+   * In essence, it executes the accumulated operations to the backend database.
    * The operations are accumulated in the operations LinkedHashSet<List<Operation>>.
+   * @throws IOException
    */
   @Override
   public void flush() {
@@ -1019,7 +1015,8 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
   }
 
   /**
-   * //TODO the javadoc
+   * This Gora API
+   * @throws IOException
    */
   @Override
   public void close() {
