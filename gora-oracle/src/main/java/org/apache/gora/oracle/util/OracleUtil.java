@@ -304,4 +304,16 @@ public class OracleUtil{
     return myKey;
   }
 
+  /**
+   * Helper method that extracts the name of the field
+   * from an Oracle NoSQL key. In essence, the field is the last minor component.
+   * @param key the Oracle NoSQL key from which the field will be extracted
+   * @return the name of the field
+   */
+  public static String getFieldFromKey(Key key) {
+    List<String> minorPath = key.getMinorPath();
+
+    // get the last minor key (which represents the field)
+    return minorPath.get(minorPath.size() - 1);
+  }
 }
