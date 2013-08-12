@@ -18,9 +18,7 @@
 
 package org.apache.gora.oracle.store;
 
-import oracle.kv.Direction;
-import oracle.kv.KeyValueVersion;
-import oracle.kv.Value;
+import oracle.kv.*;
 import org.apache.avro.util.Utf8;
 import org.apache.gora.examples.generated.Employee;
 import org.apache.gora.examples.generated.WebPage;
@@ -42,9 +40,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import oracle.kv.Key;
-
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Test case for OracleNoSQLStore.
@@ -147,6 +144,19 @@ public class TestOracleStore extends DataStoreTestBase {
     super.testSchemaExists();
   }
 
+  @Override
+  public void assertSchemaExists(String schemaName) throws Exception {
+
+    //create the key that will be used to lookup the schema
+    Key key = Key.createKey(schemaName);
+
+    //use the Oracle NoSQL kvstore directly to get the key/value pair
+    ValueVersion vv = getTestDriver().getKvstore().get(key);
+
+    //assert that get() did not return null
+    assertTrue(vv != null);
+  }
+
   @Test
   @Override
   public void testPut() throws IOException, Exception {
@@ -164,6 +174,40 @@ public class TestOracleStore extends DataStoreTestBase {
   public void testPutArray() throws IOException, Exception {
     super.testPutArray();
   }
+
+  @Override
+  public void assertPutArray() throws IOException {
+    // set the major key components for retrieval of the correct record
+    List<String> majorComponents = new ArrayList<String>();
+    majorComponents.add("WebPage");
+    majorComponents.add("com.example");
+    majorComponents.add("http");
+
+    byte[] bytes; //byte array to store the retrieved bytes
+
+    //get the bytes directly from the Oracle NoSQL database
+    bytes = getTestDriver().get(Key.createKey(majorComponents, "parsedContent"));
+
+    // check that the bytes that were retrieved are not null
+    assertNotNull(bytes);
+
+    String[] tokens = {"example", "content", "in", "example.com"};
+
+    WebPage page = webPageStore.get("com.example/http") ;
+
+    assertEquals(page.getParsedContent().size(), 4);
+
+    //assert that all retrieved tokens are correct
+    Iterator<Utf8> iter = page.getParsedContent().iterator();
+    int i=0;
+    while(iter.hasNext()){
+      String token = iter.next().toString();
+      //retrieved token equals as the one that was added
+      assertTrue(token.equals(tokens[i]));
+      i++;
+    }
+  }
+
 
   /**
    * Asserts that writing bytes actually works.
@@ -194,7 +238,7 @@ public class TestOracleStore extends DataStoreTestBase {
     WebPage page = webPageStore.get("com.example/http") ;
     page.setContent(null) ;
     webPageStore.put("com.example/http", page) ;
-    webPageStore.close() ;
+    webPageStore.flush();
     webPageStore = testDriver.createDataStore(String.class, WebPage.class);
     page = webPageStore.get("com.example/http") ;
     assertNull(page.getContent()) ;
@@ -207,7 +251,7 @@ public class TestOracleStore extends DataStoreTestBase {
     page = webPageStore.get("com.example/http") ;
     page.setContent(ByteBuffer.wrap("".getBytes())) ;
     webPageStore.put("com.example/http", page) ;
-    webPageStore.close() ;
+    webPageStore.flush();
     webPageStore = testDriver.createDataStore(String.class, WebPage.class);
     page = webPageStore.get("com.example/http") ;
     assertTrue(Arrays.equals("".getBytes(),page.getContent().array())) ;
