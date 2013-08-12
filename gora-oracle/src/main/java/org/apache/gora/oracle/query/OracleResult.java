@@ -17,7 +17,6 @@
 package org.apache.gora.oracle.query;
 
 import oracle.kv.Key;
-import oracle.kv.KeyValueVersion;
 import org.apache.gora.oracle.store.OracleStore;
 import org.apache.gora.oracle.util.OracleUtil;
 import org.apache.gora.persistency.impl.PersistentBase;
@@ -26,9 +25,10 @@ import org.apache.gora.query.impl.ResultBase;
 import org.apache.gora.store.DataStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 public class OracleResult<K, T extends PersistentBase> extends ResultBase<K, T> {
 
@@ -43,63 +43,53 @@ public class OracleResult<K, T extends PersistentBase> extends ResultBase<K, T> 
    */
   private static final Logger LOG = LoggerFactory.getLogger(OracleResult.class);
 
+  /**
+   * OracleResult Constructor
+   * If iter is null then nextInner() will get a single persistent object based
+   * on the query.key.
+   * @param dataStore the datastore used
+   * @param query the query used
+   * @param iter the iterator for traversing the result set; it can be null.
+   */
   public OracleResult(DataStore<K, T> dataStore, Query<K, T> query, Iterator<Key> iter) {
     super(dataStore, query);
 
-    LOG.info("OracleResult constructor");
-
-    store = (OracleStore<K, T>) dataStore;
-    this.resultsIterator = iter;
+    this.store = (OracleStore<K, T>) dataStore;
     this.query = query;
-    keysVisited = new HashSet<String>();
-    singleResult = false;
-  }
+    this.persistent = null;
+    this.key = null;
 
-  public OracleResult(DataStore<K, T> dataStore, Query<K, T> query) {
-    super(dataStore, query);
-
-    LOG.info("OracleResult constructor");
-
-    store = (OracleStore<K, T>) dataStore;
-    this.resultsIterator = null;
-    this.query = query;
-    keysVisited = null;
-    singleResult = true;
-    persistent = null;
-    key = null;
+    if (iter != null){
+      this.singleResult = false;
+      this.keysVisited = new HashSet<String>();
+      this.resultsIterator = iter;
+    }
+    else{
+      this.resultsIterator = null;
+      this.keysVisited = null;
+      this.singleResult = true;
+    }
   }
 
   @Override
   protected boolean nextInner() throws IOException {
 
-    LOG.info("inside nextInner()");
-
     if (!singleResult){
       if (!resultsIterator.hasNext()){
-        LOG.info("return false");
-        for (String a : keysVisited)
-          LOG.info(a);
-
         keysVisited = new HashSet<String>();
+        LOG.debug("return false");
         return false;
       }
 
       Key result_key = resultsIterator.next();
 
       if (result_key.getMajorPath().size()==1){
-        LOG.info("skipping parent key:"+result_key);
+        LOG.debug("skipping parent key:" + result_key);
         return nextInner();
       }
 
-      LOG.info("result_key="+result_key.toString()+" size:"+result_key.getMajorPath().size());
+      LOG.debug("result_key=" + result_key.toString() + " size:" + result_key.getMajorPath().size());
 
-      /*
-      if ( (result_key.getMajorPath().get(0).equals(OracleStore.getPrimaryKeyTable())) && (result_key.getMinorPath().size()==0) )
-      {
-        LOG.info("parent:"+result_key.toString());
-        return nextInner();
-      }
-      */
 
       String tmpKey = "";
 
@@ -114,35 +104,35 @@ public class OracleResult<K, T extends PersistentBase> extends ResultBase<K, T> 
 
       key = (K)tmpKey;
 
-      LOG.info("getStartKey="+query.getStartKey()+", key="+key);
+      LOG.debug("getStartKey=" + query.getStartKey() + ", key=" + key);
 
       if (keysVisited.contains((String) key)){
-        LOG.info("keysVisited contains "+key);
+        LOG.debug("keysVisited contains " + key);
         return nextInner();
       }
 
       keysVisited.add((String)key);
-      LOG.info("getKey="+(String)key);
+      LOG.debug("getKey=" + (String) key);
       persistent = store.get(key, null);
 
-      LOG.info("return true");
+      LOG.debug("return true");
       return true;
-      }
+    }
     else
     {
       if (key==null){
         key = (K)query.getStartKey();
-        LOG.info("single getKey="+(String)key);
+        LOG.debug("single getKey=" + (String) key);
         persistent = store.get(key, null);
 
-        LOG.info("persistent="+persistent);
+        LOG.debug("persistent=" + persistent);
         if (persistent!=null)
           return true;
         else
           return false;
       }
       else{
-        LOG.info("single return false");
+        LOG.debug("single return false");
         return false;
       }
     }
