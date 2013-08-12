@@ -114,7 +114,6 @@ public class OracleUtil{
                   temp_map.remove(mapKey);
                   break;
               }
-
             }
 
             new_map = new StatefulHashMap<Utf8,Utf8>(temp_map);
@@ -267,15 +266,6 @@ public class OracleUtil{
 
     return keyPath;
   }
-  /*
-  public static Key createPrimaryKey(String key){
-    return null;
-  }
-
-  public static Key createPersistentKey(String key, OracleMapping mapping){
-       return null;
-  }
-    */
 
   public static Key createTableKey(String key, String tableName){
     /**
