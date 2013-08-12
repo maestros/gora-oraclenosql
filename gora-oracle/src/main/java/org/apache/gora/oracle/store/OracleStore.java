@@ -932,7 +932,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
      */
     if ( (setKey != null) || ((startkey!=null) && (startkey.equals(endkey))) ) {
       LOG.info("startkey == endkey");
-      result = new OracleResult<K, T>(this, query);
+      result = new OracleResult<K, T>(this, query, null);
       ((OracleQuery) query).setResult(result);
       ((OracleQuery) query).setExecuted(true);
       return result;
