@@ -55,28 +55,6 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
    */
   private static final Logger LOG = LoggerFactory.getLogger(OracleStore.class);
 
-  /**
-   * The mapping file to create the tables from
-   */
-  private static final String DEFAULT_MAPPING_FILE = "gora-oracle-mapping.xml";
-
-  private static final String DURABILITY_SYNCPOLICY = "gora.oracle.durability.syncpolicy";
-  private static final String DURABILITY_REPLICAACKPOLICY = "gora.oracle.durability.replicaackpolicy";
-  private static final String CONSISTENCY = "gora.oracle.consistency";
-  private static final String TIME_UNIT = "gora.oracle.time.unit";
-  private static final String REQUEST_TIMEOUT = "gora.oracle.request.timeout";
-  private static final String READ_TIMEOUT = "gora.oracle.read.timeout";
-  private static final String OPEN_TIMEOUT = "gora.oracle.open.timeout";
-  private static final String STORE_NAME = "gora.oracle.storename";
-  private static final String HOST_NAME = "gora.oracle.hostname";
-  private static final String HOST_PORT = "gora.oracle.hostport";
-  private static final String PRIMARYKEY_TABLE_NAME = "gora.oracle.primarykey_tablename";
-
-  private static final String DEFAULT_STORE_NAME = "kvstore";
-  private static final String DEFAULT_HOST_NAME = "localhost";
-  private static final String DEFAULT_HOST_PORT = "5000";
-  private static final String DEFAULT_PRIMARYKEY_TABLE_NAME = "PrimaryKeys";
-
   private volatile OracleMapping mapping; //the mapping to the datastore
 
   private final boolean autoCreateSchema = false;
@@ -174,14 +152,14 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
    */
   private void readProperties(Properties properties) {
 
-    mappingFile = DataStoreFactory.getMappingFile(properties, this, DEFAULT_MAPPING_FILE);
-    storeName = DataStoreFactory.findProperty(properties, this, STORE_NAME, DEFAULT_STORE_NAME);
-    hostName = DataStoreFactory.findProperty(properties, this, HOST_NAME, DEFAULT_HOST_NAME);
-    hostPort = DataStoreFactory.findProperty(properties, this, HOST_PORT, DEFAULT_HOST_PORT);
-    primaryKeyTable = DataStoreFactory.findProperty(properties, this, PRIMARYKEY_TABLE_NAME, DEFAULT_PRIMARYKEY_TABLE_NAME);
+    mappingFile = DataStoreFactory.getMappingFile(properties, this, OracleStoreConstants.DEFAULT_MAPPING_FILE);
+    storeName = DataStoreFactory.findProperty(properties, this, OracleStoreConstants.STORE_NAME, OracleStoreConstants.DEFAULT_STORE_NAME);
+    hostName = DataStoreFactory.findProperty(properties, this, OracleStoreConstants.HOST_NAME, OracleStoreConstants.DEFAULT_HOST_NAME);
+    hostPort = DataStoreFactory.findProperty(properties, this, OracleStoreConstants.HOST_PORT, OracleStoreConstants.DEFAULT_HOST_PORT);
+    primaryKeyTable = DataStoreFactory.findProperty(properties, this, OracleStoreConstants.PRIMARYKEY_TABLE_NAME, OracleStoreConstants.DEFAULT_PRIMARYKEY_TABLE_NAME);
 
     try{
-      requestTimeout = Integer.parseInt(DataStoreFactory.findProperty( properties, this, REQUEST_TIMEOUT, String.valueOf(KVStoreConfig.DEFAULT_REQUEST_TIMEOUT)));
+      requestTimeout = Integer.parseInt(DataStoreFactory.findProperty( properties, this, OracleStoreConstants.REQUEST_TIMEOUT, String.valueOf(KVStoreConfig.DEFAULT_REQUEST_TIMEOUT)));
     }
     catch ( NumberFormatException nfe ) {
       requestTimeout = KVStoreConfig.DEFAULT_REQUEST_TIMEOUT;
@@ -189,7 +167,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
     }
 
     try{
-      readTimeout = Integer.parseInt(DataStoreFactory.findProperty( properties, this, READ_TIMEOUT, String.valueOf(KVStoreConfig.DEFAULT_READ_TIMEOUT)));
+      readTimeout = Integer.parseInt(DataStoreFactory.findProperty( properties, this, OracleStoreConstants.READ_TIMEOUT, String.valueOf(KVStoreConfig.DEFAULT_READ_TIMEOUT)));
     }
     catch ( NumberFormatException nfe ) {
       readTimeout = KVStoreConfig.DEFAULT_READ_TIMEOUT;
@@ -197,17 +175,17 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
     }
 
     try{
-      openTimeout = Integer.parseInt(DataStoreFactory.findProperty( properties, this, OPEN_TIMEOUT, String.valueOf(KVStoreConfig.DEFAULT_OPEN_TIMEOUT)));
+      openTimeout = Integer.parseInt(DataStoreFactory.findProperty( properties, this, OracleStoreConstants.OPEN_TIMEOUT, String.valueOf(KVStoreConfig.DEFAULT_OPEN_TIMEOUT)));
     }
     catch ( NumberFormatException nfe ) {
       openTimeout = KVStoreConfig.DEFAULT_OPEN_TIMEOUT;
       LOG.warn( "Invalid openTimeout value. Using default " + String.valueOf(KVStoreConfig.DEFAULT_OPEN_TIMEOUT) );
     }
 
-    durabilityReplicaAckPolicy = Durability.ReplicaAckPolicy.valueOf(DataStoreFactory.findProperty( properties, this, DURABILITY_REPLICAACKPOLICY, Durability.ReplicaAckPolicy.SIMPLE_MAJORITY.name() ));
-    durabilitySyncPolicy = Durability.SyncPolicy.valueOf(DataStoreFactory.findProperty( properties, this, DURABILITY_SYNCPOLICY, Durability.SyncPolicy.WRITE_NO_SYNC.name() ));
+    durabilityReplicaAckPolicy = Durability.ReplicaAckPolicy.valueOf(DataStoreFactory.findProperty( properties, this, OracleStoreConstants.DURABILITY_REPLICAACKPOLICY, Durability.ReplicaAckPolicy.SIMPLE_MAJORITY.name() ));
+    durabilitySyncPolicy = Durability.SyncPolicy.valueOf(DataStoreFactory.findProperty( properties, this, OracleStoreConstants.DURABILITY_SYNCPOLICY, Durability.SyncPolicy.WRITE_NO_SYNC.name() ));
 
-    String tmpConsistency = DataStoreFactory.findProperty( properties, this, CONSISTENCY, Consistency.NONE_REQUIRED.getName() );
+    String tmpConsistency = DataStoreFactory.findProperty( properties, this, OracleStoreConstants.CONSISTENCY, Consistency.NONE_REQUIRED.getName() );
 
     if (tmpConsistency.equals("NONE_REQUIRED"))
       consistency = Consistency.NONE_REQUIRED;
@@ -218,7 +196,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
       LOG.debug("Consistency was set to default.");
     }
 
-    String tmpTimeUnit = DataStoreFactory.findProperty( properties, this, TIME_UNIT, "MILLISECONDS");
+    String tmpTimeUnit = DataStoreFactory.findProperty( properties, this, OracleStoreConstants.TIME_UNIT, "MILLISECONDS");
 
     if (tmpTimeUnit.equals("DAYS"))
       timeUnit = TimeUnit.DAYS;
@@ -290,7 +268,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
 
     }
     catch ( Exception ex ) {
-      LOG.info("Error in parsing");
+      LOG.error("Error in parsing");
       throw new IOException(ex);
     }
 
@@ -1015,7 +993,9 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
   }
 
   /**
-   * This Gora API
+   * This Gora API method does not map semantically to
+   * the kvstore.close(). Therefore, it only flushes the operations
+   * but it does not free any resources, as other datastores do.
    * @throws IOException
    */
   @Override
