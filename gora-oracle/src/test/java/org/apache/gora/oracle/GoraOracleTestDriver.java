@@ -8,7 +8,6 @@ import org.apache.gora.oracle.store.OracleStore;
 import java.io.IOException;
 import java.util.Properties;
 
-import org.apache.gora.util.GoraException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,8 +21,8 @@ public class GoraOracleTestDriver extends GoraTestDriver {
 
   private static Logger log = LoggerFactory.getLogger(GoraOracleTestDriver.class);
   private static String storeName = "kvstore";
-  private static String hostName = "localhost";
-  private static String hostPort = "5000";
+  private static String serverHostName = "localhost";
+  private static String serverHostPort = "5000";
 
   //milliseconds to sleep after the server process executes
   private final long MILLISTOSLEEP = 8000;
@@ -108,14 +107,14 @@ public class GoraOracleTestDriver extends GoraTestDriver {
       kvstore=null;
     }
 
-    log.info("storeName:"+storeName+", host:"+hostName+":"+hostPort);
+    log.info("storeName:"+storeName+", host:"+ serverHostName +":"+ serverHostPort);
 
     boolean started = false;
     for(int i=1;i<=TIMESTORETRY;i++){
 
       try {
         kvstore = KVStoreFactory.getStore  // create the kv store
-                (new KVStoreConfig(storeName, hostName + ":" + hostPort));
+                (new KVStoreConfig(storeName, serverHostName + ":" + serverHostPort));
 
         started = true;
       }catch (FaultException fe){
