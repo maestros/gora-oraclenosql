@@ -116,6 +116,12 @@
             <systemPath>${project.basedir}/lib-ext/kvclient.jar</systemPath>
         </dependency>
 
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>20030203.000550</version>
+        </dependency>
+
         <!-- Gora Internal Dependencies -->
         <dependency>
             <groupId>org.apache.gora</groupId>

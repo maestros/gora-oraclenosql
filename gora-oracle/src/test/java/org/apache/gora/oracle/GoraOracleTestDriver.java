@@ -5,6 +5,8 @@ import oracle.kv.*;
 import org.apache.gora.GoraTestDriver;
 import org.apache.gora.oracle.store.OracleStore;
 
+import org.apache.commons.io.FileUtils;
+import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
 
@@ -59,6 +61,7 @@ public class GoraOracleTestDriver extends GoraTestDriver {
       log.info("Process killed");
     }
 
+    cleanupDirectoriesFailover();
     log.info("Finished Oracle NoSQL driver.");
   }
 
@@ -160,6 +163,39 @@ public class GoraOracleTestDriver extends GoraTestDriver {
 
   public KVStore getKvstore(){
     return kvstore;
+  }
+
+  /**
+   * Simply cleans up Oracle NoSQL's output from the Unit tests.
+   * In the case of a failure, it waits 250 msecs and tries again, 3 times in total.
+   */
+  public void cleanupDirectoriesFailover() {
+    int tries = 3;
+    while (tries-- > 0) {
+      try {
+        cleanupDirectories();
+        break;
+      } catch (Exception e) {
+        //ignore exception
+        try {
+          Thread.sleep(250);
+        } catch (InterruptedException e1) {
+          //ignore exception
+        }
+      }
+    }
+  }
+
+  /**
+   * Cleans up Oracle NoSQL's temp base directory.
+   * @throws Exception
+   *    if an error occurs
+   */
+  public void cleanupDirectories() throws Exception {
+    File dirFile = new File("kvroot");
+    if (dirFile.exists()) {
+      FileUtils.deleteDirectory(dirFile);
+    }
   }
 
 }
