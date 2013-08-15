@@ -66,7 +66,7 @@
         <sourceDirectory>src/main/java</sourceDirectory>
         <testResources>
           <testResource>
-            <directory>${project.basedir}/src/test/resources</directory>
+            <directory>${project.basedir}/src/test/conf</directory>
             <includes>
               <include>**/*</include>
             </includes>
@@ -80,6 +80,9 @@
               <include>**/*</include>
             </includes>
 		   </resource>
+           <resource>
+               <directory>${project.basedir}/src/test/conf</directory>
+           </resource>
 		</resources>
         <plugins>
             <plugin>
