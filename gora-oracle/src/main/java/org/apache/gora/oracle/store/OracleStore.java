@@ -59,13 +59,18 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
 
   private final boolean autoCreateSchema = false;
 
-  /*
+  /*********************************************************************
    * Variables and references to Oracle NoSQL properties
    * and configuration values.
-   */
+   *********************************************************************/
   private static String storeName;  //the name of the oracle kv store
-  private static String hostName;   //the name of the host to connect (could be the IP)
-  private static String hostPort;   //the port of the oracle kv store to connect to
+
+  /*
+   * the name(s) of the host to connect (could be the IP)
+   * and the port(s) of the oracle kv store to connect to
+   */
+  private static String[] hostNamePorts;
+
   private static String mappingFile;  //the filename of the mapping (xml) file
   private static String primaryKeyTable;  //the name of the table that stores the primary keys
 
@@ -101,11 +106,6 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
       return;
     }
 
-    if (properties==null)
-      LOG.info("Error: Properties was not found!");
-    else
-      LOG.info("Properties found");
-
     operations = new LinkedHashSet();
 
     readProperties(properties);
@@ -128,11 +128,11 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
 
   /**
    * Sets the configuration for the client according to the properties
-   * and establishes a new connection to the Oracle NoSQL datastore
+   * and establishes a new connection to the Oracle NoSQL datastore.
    */
   private void setupClient(){
 
-    conf = new KVStoreConfig(storeName, hostName + ":" + hostPort);
+    conf = new KVStoreConfig(storeName, hostNamePorts);
 
     conf.setRequestTimeout(requestTimeout, timeUnit);
     conf.setSocketReadTimeout(readTimeout, timeUnit);
@@ -154,8 +154,8 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
 
     mappingFile = DataStoreFactory.getMappingFile(properties, this, OracleStoreConstants.DEFAULT_MAPPING_FILE);
     storeName = DataStoreFactory.findProperty(properties, this, OracleStoreConstants.STORE_NAME, OracleStoreConstants.DEFAULT_STORE_NAME);
-    hostName = DataStoreFactory.findProperty(properties, this, OracleStoreConstants.HOST_NAME, OracleStoreConstants.DEFAULT_HOST_NAME);
-    hostPort = DataStoreFactory.findProperty(properties, this, OracleStoreConstants.HOST_PORT, OracleStoreConstants.DEFAULT_HOST_PORT);
+
+    hostNamePorts = OracleUtil.getHostPorts(DataStoreFactory.findProperty(properties, this, OracleStoreConstants.HOST_NAME_PORT, OracleStoreConstants.DEFAULT_HOST_NAME_PORT), OracleStoreConstants.PROPERTIES_SEPARATOR);
     primaryKeyTable = DataStoreFactory.findProperty(properties, this, OracleStoreConstants.PRIMARYKEY_TABLE_NAME, OracleStoreConstants.DEFAULT_PRIMARYKEY_TABLE_NAME);
 
     try{
@@ -268,7 +268,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
 
     }
     catch ( Exception ex ) {
-      LOG.error("Error in parsing");
+      LOG.error("Error in parsing: "+ex.getMessage());
       throw new IOException(ex);
     }
 

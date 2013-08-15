@@ -28,11 +28,13 @@ import org.apache.avro.util.Utf8;
 import org.apache.gora.avro.PersistentDatumWriter;
 import org.apache.gora.oracle.store.OracleMapping;
 import org.apache.gora.oracle.store.OracleStore;
+import org.apache.gora.oracle.store.OracleStoreConstants;
 import org.apache.gora.persistency.ListGenericArray;
 import org.apache.gora.persistency.State;
 import org.apache.gora.persistency.StatefulHashMap;
 import org.apache.gora.persistency.StatefulMap;
 import org.apache.gora.query.Query;
+import org.apache.gora.util.GoraException;
 import org.apache.gora.util.IOUtils;
 import org.apache.hadoop.io.Text;
 import org.slf4j.Logger;
@@ -306,4 +308,35 @@ public class OracleUtil{
     // get the last minor key (which represents the field)
     return minorPath.get(minorPath.size() - 1);
   }
+
+  /**
+   * Helper method to split a string into its tokens.
+   * @param str the String to be separated into tokens
+   * @param separator the separator String
+   * @return an array of all the tokens
+   */
+  public static String[] getHostPorts(String str, String separator){
+    String[] tokens;
+
+    if (str.contains(separator)){
+      tokens = str.split(separator);
+
+      for(int i=0;i<tokens.length;i++){
+        tokens[i] = tokens[i].trim();
+        if (!tokens[i].contains(":")){
+          LOG.warn(OracleStoreConstants.HOST_NAME_PORT+" has invalid format. Default hostname:port was used.");
+          tokens[i] = OracleStoreConstants.DEFAULT_HOST_NAME_PORT;
+        }
+
+      }
+    }
+    else{
+      LOG.debug(str+": str does not contain "+separator);
+      tokens = new String[1];
+      tokens[0] = str;
+    }
+
+    return tokens;
+  }
+
 }
