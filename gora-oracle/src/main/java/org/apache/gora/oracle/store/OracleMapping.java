@@ -45,7 +45,6 @@ public class OracleMapping {
    */
   public OracleMapping() {
     mapping = new HashMap<String,String>();
-    LOG.info("Inside OracleMapping default constructor");
   }
 
   /**
@@ -64,7 +63,6 @@ public class OracleMapping {
     this.setKeyClass(keyClass);
     this.setMajorKey(tableName);
     this.mapping = mapping;
-    LOG.info("Inside OracleMapping constructor");
   }
 
   public String getClassName() {
@@ -170,7 +168,7 @@ public class OracleMapping {
      * @param tabName
      */
     public void setTableName(String tabName){
-      LOG.info("Table was set to: "+tabName);
+      LOG.debug("Table was set to: "+tabName);
       tableName = tabName;
     }
 
@@ -200,7 +198,7 @@ public class OracleMapping {
         tmpKey = null;
       }
 
-      LOG.info("field: "+field+" was mapped to column:"+column);
+      LOG.debug("field: "+field+" was mapped to column:"+column);
       mapping.put(field, column);
     }
 
@@ -208,6 +206,7 @@ public class OracleMapping {
      * Verifies that all properties are valid and
      * constructs the OracleMapping object.
      * @return A newly constructed mapping.
+     * @throws GoraException
      */
     public OracleMapping build() throws GoraException {
 
@@ -231,7 +230,7 @@ public class OracleMapping {
       if (mapping.isEmpty())
         throw new GoraException("No fields specified.");
 
-      LOG.info("OracleMappingBuilder.build completed all checks.");
+      LOG.debug("OracleMappingBuilder.build completed all checks.");
 
       return new OracleMapping(tableName, primaryKey, className, keyClass, mapping);
     }

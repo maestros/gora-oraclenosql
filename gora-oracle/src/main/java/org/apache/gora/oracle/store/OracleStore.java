@@ -57,8 +57,6 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
 
   private volatile OracleMapping mapping; //the mapping to the datastore
 
-  private final boolean autoCreateSchema = false;
-
   /*********************************************************************
    * Variables and references to Oracle NoSQL properties
    * and configuration values.
@@ -113,7 +111,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
     setupClient();
 
     try {
-      LOG.info("mappingFile="+mappingFile);
+      LOG.debug("mappingFile="+mappingFile);
       mapping = readMapping( mappingFile );
     }
     catch ( IOException e ) {
@@ -153,8 +151,8 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
   private void readProperties(Properties properties) {
 
     mappingFile = DataStoreFactory.getMappingFile(properties, this, OracleStoreConstants.DEFAULT_MAPPING_FILE);
-    storeName = DataStoreFactory.findProperty(properties, this, OracleStoreConstants.STORE_NAME, OracleStoreConstants.DEFAULT_STORE_NAME);
 
+    storeName = DataStoreFactory.findProperty(properties, this, OracleStoreConstants.STORE_NAME, OracleStoreConstants.DEFAULT_STORE_NAME);
     hostNamePorts = OracleUtil.getHostPorts(DataStoreFactory.findProperty(properties, this, OracleStoreConstants.HOST_NAME_PORT, OracleStoreConstants.DEFAULT_HOST_NAME_PORT), OracleStoreConstants.PROPERTIES_SEPARATOR);
     primaryKeyTable = DataStoreFactory.findProperty(properties, this, OracleStoreConstants.PRIMARYKEY_TABLE_NAME, OracleStoreConstants.DEFAULT_PRIMARYKEY_TABLE_NAME);
 
@@ -308,7 +306,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
   public void createSchema() {
 
     if (schemaExists()){
-      LOG.info("Schema: "+mapping.getMajorKey()+" already exists");
+      LOG.debug("Schema: "+mapping.getMajorKey()+" already exists");
       return;
     }
 
@@ -317,7 +315,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
       try {
         kvstore.put(mapping.getMajorKey(), Value.EMPTY_VALUE);
         tries=2;
-        LOG.info("Schema: "+mapping.getMajorKey()+" was created successfully");
+        LOG.debug("Schema: "+mapping.getMajorKey()+" was created successfully");
       } catch (DurabilityException de) {
         // The durability guarantee could not be met.
         if (tries==1)
@@ -374,8 +372,6 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
   @Override
   public void deleteSchema() {
 
-    LOG.info("deleteSchema was called.");
-
     if (!schemaExists())
       return;
 
@@ -392,7 +388,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
             break;
           }
           Key descendant = Key.createKey(i.next().getMajorPath());
-          LOG.info("Deleting: "+descendant.toString());
+          LOG.debug("Deleting: "+descendant.toString());
           kvstore.multiDelete(descendant, null,
                   Depth.PARENT_AND_DESCENDANTS);
         }
@@ -402,7 +398,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
           primaryKeys.add(mapping.getTableName());
 
           Key primary = Key.createKey(primaryKeys);
-          LOG.info("Deleting: "+primary.toString());
+          LOG.debug("Deleting: "+primary.toString());
           kvstore.multiDelete(primary, null,
                   Depth.PARENT_AND_DESCENDANTS);
 
@@ -457,7 +453,6 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
 
       }
     }
-    LOG.info("deleteSchema finished.");
   }
 
   /**
@@ -481,7 +476,6 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
     if(result == null || result.isEmpty())
       return null;
 
-    LOG.info("newInstance");
     T persistent = newPersistent();
 
     /*
@@ -503,7 +497,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
       if (!fieldsSet.isEmpty() && !fieldsSet.contains(field)) {
         //if field retrieved is not contained in the the specified field set
         //then skip this field (thus, do not include it in the new Persistent)
-        LOG.info("field:"+field+" not in fieldset. skipped.");
+        LOG.debug("field:"+field+" not in fieldset. skipped.");
         continue;
       }
 
@@ -511,11 +505,11 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
 
       byte[] val = entry.getValue().getValue().getValue();
       if (val == null) {
-        LOG.info("Field: "+field+" was skipped because its value was null.");
+        LOG.debug("Field: "+field+" was skipped because its value was null.");
         continue;
       }
 
-      LOG.info("field: "+persistentField.name()+", schema: "+persistentField.schema().getType());
+      LOG.debug("field: "+persistentField.name()+", schema: "+persistentField.schema().getType());
 
       Object v = null;
 
@@ -550,7 +544,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
             persistent.put(persistentField.pos(),  bb);
           break;
         default:
-          LOG.info("Type not considered: " + persistentField.schema().getType().name());
+          LOG.debug("Type not considered: " + persistentField.schema().getType().name());
       }
 
     }
@@ -568,8 +562,6 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
   @Override
   public T get(K key, String[] fields) {
 
-    LOG.info("inside get");
-
     // trivial check for a null key
     if (key==null)
       return null;
@@ -584,7 +576,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
       return null;
     }
 
-    LOG.info("multiGet size: "+kvResult.size());
+    LOG.debug("multiGet size: "+kvResult.size());
 
     if (kvResult.size()==0)
       return null;
@@ -609,20 +601,14 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
   @Override
   public void put(K key, T persistent) {
 
-    LOG.info("inside put");
-
     Schema schema = persistent.getSchema();
     StateManager stateManager = persistent.getStateManager();
 
-    //LOG.info(schema.getField(mapping.getPrimaryKey()));
-
     if ( !stateManager.isDirty( persistent ) ) {
       // nothing to do
-      LOG.info("is not dirty");
+      LOG.debug("is not dirty");
       return;
     }
-
-    LOG.info("is dirty");
 
     List<Schema.Field> fields = schema.getFields();
 
@@ -638,7 +624,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
     Key primaryKey = Key.createKey(majorComponentsForParent, (String) key);
 
     opList.add(of.createPut(primaryKey, Value.EMPTY_VALUE));
-    LOG.info("Added primary key:"+primaryKey);
+
     operations.add(opList);
     opList = new ArrayList<Operation>();
 
@@ -657,17 +643,14 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
       // The field name will be part of the minor components of the key
       Key oracleKey = OracleUtil.createKey(majorComponents, mapping.getColumn(field.name()));
 
-      LOG.info("fieldSchema="+fieldSchema.getType());
+      LOG.debug("fieldSchema="+fieldSchema.getType());
 
       // in case the value is null then delete the key
       if (value==null){
-        LOG.info("value==null");
         of = kvstore.getOperationFactory();
         opList.add(of.createDelete(oracleKey)); //delete the key
       }
       else{
-        LOG.info("value!=null");
-
         // Create the value
         Value oracleValue = OracleUtil.createValue(value, fieldSchema, datumWriter);
         of = kvstore.getOperationFactory();
@@ -704,10 +687,9 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
    * @return the key (K) of the Persistent object.
    */
   private K getKeyFromPersistent(T obj){
-    LOG.info("inside getKeyFromPersistent");
     K key = null;
     try {
-      LOG.info("Primary key field:"+mapping.getPrimaryKey());
+      LOG.debug("Primary key field:"+mapping.getPrimaryKey());
       Field field = obj.getClass().getDeclaredField(mapping.getPrimaryKey());
       field.setAccessible(true);
       Utf8 primary_key = (Utf8)field.get(obj);
@@ -730,11 +712,9 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
    * @return true if the object was deleted, false otherwise
    */
   public boolean delete(T obj) {
-    LOG.info("Inside delete()");
-
     K key = getKeyFromPersistent(obj);
 
-    LOG.info("Key:"+key);
+    LOG.debug("Key:"+key);
     Query<K,T> query = newQuery();
     query.setKey(key);
     long rowsDeleted = deleteByQuery(query);
@@ -753,7 +733,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
    */
   @Override
   public boolean delete(K key) {
-    LOG.info("Inside delete(). Key:"+key);
+    LOG.debug("Inside delete(). Key:"+key);
     Query<K,T> query = newQuery();
     query.setKey(key);
     long rowsDeleted = deleteByQuery(query);
@@ -761,7 +741,6 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
     if (rowsDeleted>1)
       LOG.warn("Warning: Single key:"+key+" deleted "+rowsDeleted+" records (primary keys).");
 
-    LOG.info("finished deleting.");
     return  rowsDeleted > 0;
   }
 
@@ -774,10 +753,8 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
   @Override
   public long deleteByQuery(Query<K, T> query) {
 
-    LOG.info("inside deleteByQuery()");
-
     if (((OracleQuery) query).isExecuted()){
-      LOG.info("query has already been executed.");
+      LOG.debug("query has already been executed.");
       return 0;
     }
 
@@ -793,10 +770,9 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
         String[] fields = query.getFields();
 
         if (fields!=null){
-          LOG.info("deleteByQuery. fields to be deleted:"+fields.length);
+          LOG.debug("deleteByQuery. fields to be deleted:"+fields.length);
 
           if (Arrays.equals(fields, getAllPersistentFields())){
-            LOG.info("Arrays.equals");
             //Delete all the fields associated with the persistent
             //along with its primary key.
             opList = deleteRecord((String) result.getKey());
@@ -804,7 +780,6 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
             operations.add(opList);
           }
           else{
-            LOG.info("Arrays not equal");
             opList = new ArrayList<Operation>();
             for (String field : fields){
               deleteFieldFromRecord((String) result.getKey(), field, opList);
@@ -815,7 +790,6 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
           }
         }
         else{
-          LOG.info("fields==null");
           //Delete all the fields associated with the persistent
           //along with its primary key.
           opList = deleteRecord((String) result.getKey());
@@ -833,7 +807,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
       e.printStackTrace();
     }
 
-    LOG.info("recordsDeleted="+recordsDeleted);
+    LOG.debug("recordsDeleted="+recordsDeleted);
     return recordsDeleted;
   }
 
@@ -853,7 +827,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
 
     Key oracleKey = OracleUtil.createKey(majorKeyComponents, field);
 
-    LOG.info("Field to be deleted: "+oracleKey.toString());
+    LOG.debug("Field to be deleted: "+oracleKey.toString());
     //Delete the field
     opList.add(of.createDelete(oracleKey));
   }
@@ -868,7 +842,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
     List<Operation> opList = new ArrayList<Operation>();
     OperationFactory of = kvstore.getOperationFactory();
     Key oracleKey = OracleUtil.createTableKey(key, mapping.getTableName());
-    LOG.info("Key to be deleted: "+key.toString());
+    LOG.debug("Key to be deleted: "+key.toString());
     kvstore.multiDelete(oracleKey, null,
             Depth.PARENT_AND_DESCENDANTS);
 
@@ -877,7 +851,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
     primaryKeyComponents.add(OracleStore.getPrimaryKeyTable());
     primaryKeyComponents.add(mapping.getTableName());
     oracleKey = Key.createKey(primaryKeyComponents, key);
-    LOG.info("Primary Key to be deleted: "+oracleKey.toString());
+    LOG.debug("Primary Key to be deleted: "+oracleKey.toString());
     opList.add(of.createDelete(oracleKey));
     return opList;
   }
@@ -890,7 +864,6 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
    */
   @Override
   public Result<K, T> execute(Query<K, T> query) {
-    LOG.info("inside execute()");
 
     if (((OracleQuery) query).isExecuted())
       return ((OracleQuery) query).getResult();
@@ -900,8 +873,8 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
     String endkey = (String) query.getEndKey();
     String setKey = (String) query.getKey();
 
-    LOG.info("startkey="+startkey);
-    LOG.info("endkey="+endkey);
+    LOG.debug("startkey="+startkey);
+    LOG.debug("endkey="+endkey);
 
     /*
      * in case startkey == endkey then
@@ -909,7 +882,6 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
      * in order to retrieve a specific key.
      */
     if ( (setKey != null) || ((startkey!=null) && (startkey.equals(endkey))) ) {
-      LOG.info("startkey == endkey");
       result = new OracleResult<K, T>(this, query, null);
       ((OracleQuery) query).setResult(result);
       ((OracleQuery) query).setExecuted(true);
@@ -917,10 +889,11 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
     }
 
     Iterator<Key> iter = OracleUtil.getPrimaryKeys(kvstore, query, mapping.getTableName());
-
+    /*
     LOG.info("iterating...");
     while (iter.hasNext())
       LOG.info("key:"+iter.next().toString());
+    */
 
     iter = OracleUtil.getPrimaryKeys(kvstore, query, mapping.getTableName());
 
@@ -936,7 +909,6 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
    */
   @Override
   public Query<K, T> newQuery() {
-    LOG.info("newQuery called!");
     return new OracleQuery<K, T>(this);
   }
 
@@ -957,7 +929,6 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
   @Override
   public void flush() {
 
-    LOG.info("flush()");
     List<Operation> opList;
 
     Iterator<List<Operation>> iterOper = operations.iterator();
@@ -965,7 +936,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
       try {
         opList = iterOper.next();
         for (Operation op : opList)
-          LOG.info("Executing:"+op.getType()+" for key:"+op.getKey());
+          LOG.debug("Executing:"+op.getType()+" for key:"+op.getKey());
 
         kvstore.execute(opList);
         iterOper.remove();
@@ -989,7 +960,6 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
         LOG.error("A generic error occurred.");
       }
     }
-    LOG.info("finished flushing");
   }
 
   /**
@@ -1001,7 +971,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
   @Override
   public void close() {
     flush();
-    LOG.info("Datastore closed.");
+    LOG.debug("Datastore closed.");
   }
 
 }

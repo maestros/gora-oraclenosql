@@ -183,7 +183,7 @@ public class OracleUtil{
 
     returnKey = Key.createKey(majorComponents, minorComponents);
 
-    LOG.info("returnKey="+returnKey.toString());
+    LOG.debug("returnKey="+returnKey.toString());
     return returnKey;
   }
 
@@ -239,10 +239,8 @@ public class OracleUtil{
     String startkey = (String)query.getStartKey();
     String endkey = (String)query.getEndKey();
 
-    LOG.info("startkey=" + startkey);
-    LOG.info("endkey=" + endkey);
     Key primaryKey = OracleUtil.keyFromString(OracleStore.getPrimaryKeyTable()+"/"+tableName);
-    LOG.info("PrimaryKey:" + primaryKey.toString());
+    LOG.debug("PrimaryKey:" + primaryKey.toString());
 
     KeyRange keyRange;
     if ( (startkey==null) && (endkey==null) )
@@ -286,12 +284,12 @@ public class OracleUtil{
         majorKey = "/"+key;
     }
 
-    LOG.info("majorKey="+majorKey);
+    LOG.debug("majorKey="+majorKey);
 
     majorKey = majorKey.replace("//"+tableName,"/"+tableName);
 
     Key myKey = OracleUtil.createKey(majorKey);
-    LOG.info("Key:"+myKey.toString());
+    LOG.debug("Key:"+myKey.toString());
 
     return myKey;
   }

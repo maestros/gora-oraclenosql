@@ -91,7 +91,7 @@ public class TestOracleStore extends DataStoreTestBase {
   }
 
   private void dumpDB(String[] tables){
-    log.info("start: dumpDB");
+    log.debug("start: dumpDB");
     ArrayList<String> majorComponents = new ArrayList<String>();
 
     int records=0;
@@ -107,7 +107,7 @@ public class TestOracleStore extends DataStoreTestBase {
       while (i.hasNext()) {
         KeyValueVersion kvv =  i.next();
 
-        log.info(kvv.getKey().toString()+":"+new String(kvv.getValue().getValue()));
+        log.debug(kvv.getKey().toString()+":"+new String(kvv.getValue().getValue()));
         records++;
       }
 
@@ -115,9 +115,9 @@ public class TestOracleStore extends DataStoreTestBase {
     }
 
     if (records==0)
-      log.info("no records found.");
+      log.debug("no records found.");
 
-    log.info("end: dumpDB");
+    log.debug("end: dumpDB");
   }
 
   @Test
@@ -177,7 +177,7 @@ public class TestOracleStore extends DataStoreTestBase {
 
   @Override
   public void assertPutArray() throws IOException {
-    // set the major key components for retrieval of the correct record
+    //set the major key components for retrieval of the correct record
     List<String> majorComponents = new ArrayList<String>();
     majorComponents.add("WebPage");
     majorComponents.add("com.example");
@@ -188,7 +188,7 @@ public class TestOracleStore extends DataStoreTestBase {
     //get the bytes directly from the Oracle NoSQL database
     bytes = getTestDriver().get(Key.createKey(majorComponents, "parsedContent"));
 
-    // check that the bytes that were retrieved are not null
+    //check that the bytes that were retrieved are not null
     assertNotNull(bytes);
 
     String[] tokens = {"example", "content", "in", "example.com"};
