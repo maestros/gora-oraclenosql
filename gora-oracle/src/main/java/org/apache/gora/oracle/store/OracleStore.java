@@ -23,20 +23,25 @@ import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.avro.util.Utf8;
+import org.apache.gora.avro.PersistentDatumWriter;
+import org.apache.gora.oracle.encoders.Encoder;
 import org.apache.gora.oracle.query.OracleQuery;
 import org.apache.gora.oracle.query.OracleResult;
 import org.apache.gora.oracle.store.OracleMapping.OracleMappingBuilder;
 import org.apache.gora.oracle.util.OracleUtil;
 
 import oracle.kv.*;
+import org.apache.gora.persistency.State;
 import org.apache.gora.persistency.StateManager;
 import org.apache.gora.persistency.StatefulHashMap;
+import org.apache.gora.persistency.StatefulMap;
 import org.apache.gora.persistency.impl.PersistentBase;
 import org.apache.gora.query.PartitionQuery;
 import org.apache.gora.query.Query;
 import org.apache.gora.query.Result;
 import org.apache.gora.store.DataStoreFactory;
 import org.apache.gora.store.impl.DataStoreBase;
+import org.apache.gora.util.AvroUtils;
 import org.apache.gora.util.IOUtils;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -64,6 +69,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
   private static final Logger LOG = LoggerFactory.getLogger(OracleStore.class);
 
   private volatile OracleMapping mapping; //the mapping to the datastore
+  private Encoder encoder;
 
   /*********************************************************************
    * Variables and references to Oracle NoSQL properties
@@ -111,6 +117,8 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
       LOG.warn("OracleStore is already initialised");
       return;
     }
+
+    encoder = new org.apache.gora.oracle.encoders.BinaryEncoder();
 
     operations = new LinkedHashSet();
 
@@ -290,6 +298,33 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
     return mappingBuilder.build();
   }
 
+
+  public Object fromBytes(Schema schema, byte data[]) {
+    return fromBytes(encoder, schema, data);
+  }
+
+  public static Object fromBytes(Encoder encoder, Schema schema, byte data[]) {
+    switch (schema.getType()) {
+      case BOOLEAN:
+        return encoder.decodeBoolean(data);
+      case DOUBLE:
+        return encoder.decodeDouble(data);
+      case FLOAT:
+        return encoder.decodeFloat(data);
+      case INT:
+        return encoder.decodeInt(data);
+      case LONG:
+        return encoder.decodeLong(data);
+      case STRING:
+        return new Utf8(data);
+      case BYTES:
+        return ByteBuffer.wrap(data);
+      case ENUM:
+        return AvroUtils.getEnumValue(schema, encoder.decodeInt(data));
+    }
+    throw new IllegalArgumentException("Unknown type " + schema.getType());
+
+  }
 
   /**
    * Gets the name of the table that stores the primary keys.
@@ -480,11 +515,113 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
     return kvstore.get(mapping.getMajorKey())!=null ? true : false;
   }
 
+
   /**
-   * //TODO the javadoc
-   * @param result
-   * @param fields
-   * @return
+   * Converts a value into an oracle.kv.Value and returns that Value.
+   * @param value the value to be converted
+   * @return the value as an oracle.kv.Value
+   */
+  private Value createValue(Object value, Schema fieldSchema, PersistentDatumWriter datumWriter){
+    Value returnValue;
+
+    if (value!=null){
+      returnValue = Value.createValue(value.toString().getBytes());
+
+      byte[] byteArrayValue = null;
+
+      switch (fieldSchema.getType()){
+        case MAP:
+          byte[] data = null;
+
+          try {
+            Map map = (Map) value;
+            StatefulMap<Utf8,Utf8> new_map = null;
+            Map<Utf8,Utf8> temp_map = new HashMap<Utf8,Utf8>();
+
+            if (map.size()>0) {
+              Set<?> es = map.entrySet();
+              for (Object entry : es) {
+                Utf8 mapKey = (Utf8) ((Map.Entry) entry).getKey();
+                Utf8 mapVal = (Utf8) ((Map.Entry) entry).getValue();
+                temp_map.put(mapKey, mapVal);
+              }
+            }
+
+            StatefulMap<Utf8,Utf8> old_map = (StatefulMap) value;
+
+            Set<?> es = old_map.states().entrySet();
+            for (Object entry : es) {
+              Utf8 mapKey = (Utf8)((Map.Entry) entry).getKey();
+              State state = (State) ((Map.Entry) entry).getValue();
+
+              switch (state) {
+                case DIRTY:
+                case CLEAN:
+                case NEW:
+                  temp_map.put(mapKey, old_map.get(mapKey));
+                  break;
+                case DELETED:
+                  temp_map.remove(mapKey);
+                  break;
+              }
+            }
+
+            new_map = new StatefulHashMap<Utf8,Utf8>(temp_map);
+
+            data = IOUtils.serialize( datumWriter, fieldSchema, new_map );
+            returnValue = Value.createValue( data ) ;
+
+          } catch ( IOException e ) {
+            LOG.error(e.getMessage(), e.getStackTrace().toString());
+          }
+
+          break;
+        case ARRAY:
+        case RECORD:
+          try {
+            byteArrayValue = IOUtils.serialize(datumWriter, fieldSchema, value);
+          } catch ( IOException e ) {
+            LOG.error( e.getMessage(), e.getStackTrace().toString() );
+          }
+          returnValue = Value.createValue( byteArrayValue ) ;
+          break;
+        case UNION:
+
+          if (value instanceof ByteBuffer)
+            returnValue = Value.createValue(((ByteBuffer) value).array());
+          else {
+            SpecificDatumWriter writer = new SpecificDatumWriter(fieldSchema);
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            BinaryEncoder encoder = new BinaryEncoder(os);
+            try {
+              writer.write(value, encoder);
+              encoder.flush();
+            } catch (IOException e) {
+              e.printStackTrace();
+            }
+
+            returnValue = Value.createValue( os.toByteArray() ) ;
+          }
+
+          break;
+        default:
+          returnValue = Value.createValue(OracleUtil.toBytes(encoder, value));
+          break;
+      }
+
+    }
+    else
+      returnValue = Value.EMPTY_VALUE;
+
+    return returnValue;
+  }
+
+  /**
+   * Creates a new Persistent instance with the values in 'result' for the fields listed.
+   * @param result result form a HTable#get()
+   * @param fields List of fields queried, or null for all
+   * @return A new instance with default values for not listed fields
+   *         null if 'result' is null.
    * @throws IOException
    */
   public T newInstance(SortedMap<Key, ValueVersion> result, String[] fields)
@@ -530,21 +667,6 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
       Object v = null;
 
       switch (persistentField.schema().getType()){
-        case LONG:
-          bb = ByteBuffer.wrap(val);
-          persistent.put(persistentField.pos(), bb.getLong());
-          break;
-        case INT:
-          bb = ByteBuffer.wrap(val);
-          persistent.put(persistentField.pos(), bb.getInt());
-          break;
-        case BYTES:
-          bb = ByteBuffer.wrap(val);
-          persistent.put(persistentField.pos(),  bb);
-          break;
-        case STRING:
-          persistent.put(persistentField.pos(), new Utf8(val));
-          break;
         case MAP:
           v = IOUtils.deserialize((byte[]) val, datumReader, persistentField.schema(), persistent.get(persistentField.pos()));
           Map map = (StatefulHashMap) v;
@@ -556,10 +678,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
           persistent.put( persistentField.pos(), v );
           break;
         case UNION:
-
-          LOG.info("persistentField.schema()="+persistentField.schema().getTypes());
           String type = persistentField.schema().getTypes().get(1).getName();
-          LOG.info("type="+type);
 
           if (type.equals("bytes")){
             bb = ByteBuffer.wrap(val);
@@ -573,7 +692,8 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
 
           break;
         default:
-          LOG.info("Type not considered: " + persistentField.schema().getType().name());
+          persistent.put(persistentField.pos(), fromBytes(persistentField.schema(), val));
+          break;
       }
 
     }
@@ -590,8 +710,6 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
    */
   @Override
   public T get(K key, String[] fields) {
-
-    LOG.info("inside get");
     // trivial check for a null key
     if (key==null)
       return null;
@@ -606,7 +724,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
       return null;
     }
 
-    LOG.info("multiGet size: "+kvResult.size());
+    LOG.debug("multiGet size: " + kvResult.size());
 
     if (kvResult.size()==0)
       return null;
@@ -682,7 +800,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
       }
       else{
         // Create the value
-        Value oracleValue = OracleUtil.createValue(value, fieldSchema, datumWriter);
+        Value oracleValue = createValue(value, fieldSchema, datumWriter);
         of = kvstore.getOperationFactory();
         opList.add(of.createPut(oracleKey, oracleValue));
       }

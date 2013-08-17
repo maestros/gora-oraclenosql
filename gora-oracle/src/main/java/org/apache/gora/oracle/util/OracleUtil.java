@@ -16,37 +16,26 @@
  */
 package org.apache.gora.oracle.util;
 
-import oracle.kv.*;
-import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericArray;
-import org.apache.avro.io.BinaryEncoder;
-import org.apache.avro.io.DatumWriter;
-import org.apache.avro.io.Encoder;
-import org.apache.avro.reflect.ReflectData;
-import org.apache.avro.reflect.ReflectDatumWriter;
-import org.apache.avro.specific.SpecificDatumWriter;
+import oracle.kv.Direction;
+import oracle.kv.Depth;
+import oracle.kv.KVStore;
+import oracle.kv.Key;
+import oracle.kv.KeyRange;
 import org.apache.avro.util.Utf8;
-import org.apache.gora.avro.PersistentDatumWriter;
-import org.apache.gora.oracle.store.OracleMapping;
+import org.apache.gora.oracle.encoders.Encoder;
 import org.apache.gora.oracle.store.OracleStore;
 import org.apache.gora.oracle.store.OracleStoreConstants;
-import org.apache.gora.persistency.ListGenericArray;
-import org.apache.gora.persistency.State;
-import org.apache.gora.persistency.StatefulHashMap;
-import org.apache.gora.persistency.StatefulMap;
 import org.apache.gora.query.Query;
-import org.apache.gora.util.GoraException;
-import org.apache.gora.util.IOUtils;
-import org.apache.hadoop.io.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 public class OracleUtil{
 
@@ -57,115 +46,57 @@ public class OracleUtil{
 
   private static final Charset UTF8_CHARSET = Charset.forName("UTF-8");
 
-  /**
-   * Converts a value into an oracle.kv.Value and returns that Value.
-   * @param value the value to be converted
-   * @return the value as an oracle.kv.Value
-   */
-  public static Value createValue(Object value, Schema fieldSchema, PersistentDatumWriter datumWriter){
-    Value returnValue;
-
-    if (value!=null){
-      returnValue = Value.createValue(value.toString().getBytes());
-
-      byte[] byteArrayValue = null;
-
-      switch (fieldSchema.getType()){
-        case LONG:
-          returnValue = Value.createValue( ByteBuffer.allocate(8).putLong((Long) value).array() );
-          break;
-        case INT:
-          returnValue = Value.createValue( ByteBuffer.allocate(4).putInt((Integer) value).array() );
-          break;
-        case BYTES:
-          returnValue = Value.createValue( ((ByteBuffer) value).array() );
-          break;
-        case STRING:
-          returnValue = Value.createValue( ((Utf8) value).getBytes() ) ;
-          break;
-        case MAP:
-          byte[] data = null;
-
-          try {
-            Map map = (Map) value;
-            StatefulMap<Utf8,Utf8> new_map = null;
-            Map<Utf8,Utf8> temp_map = new HashMap<Utf8,Utf8>();
-
-            if (map.size()>0) {
-              Set<?> es = map.entrySet();
-              for (Object entry : es) {
-                Utf8 mapKey = (Utf8) ((Map.Entry) entry).getKey();
-                Utf8 mapVal = (Utf8) ((Map.Entry) entry).getValue();
-                temp_map.put(mapKey, mapVal);
-              }
-            }
-
-            StatefulMap<Utf8,Utf8> old_map = (StatefulMap) value;
-
-            Set<?> es = old_map.states().entrySet();
-            for (Object entry : es) {
-              Utf8 mapKey = (Utf8)((Map.Entry) entry).getKey();
-              State state = (State) ((Map.Entry) entry).getValue();
-
-              switch (state) {
-                case DIRTY:
-                case CLEAN:
-                case NEW:
-                  temp_map.put(mapKey, old_map.get(mapKey));
-                  break;
-                case DELETED:
-                  temp_map.remove(mapKey);
-                  break;
-              }
-            }
-
-            new_map = new StatefulHashMap<Utf8,Utf8>(temp_map);
-
-            data = IOUtils.serialize( datumWriter, fieldSchema, new_map );
-            returnValue = Value.createValue( data ) ;
-
-          } catch ( IOException e ) {
-            LOG.error(e.getMessage(), e.getStackTrace().toString());
-          }
-
-          break;
-        case ARRAY:
-        case RECORD:
-          try {
-            byteArrayValue = IOUtils.serialize(datumWriter, fieldSchema, value);
-          } catch ( IOException e ) {
-            LOG.error( e.getMessage(), e.getStackTrace().toString() );
-          }
-          returnValue = Value.createValue( byteArrayValue ) ;
-          break;
-        case UNION:
-
-          if (value instanceof ByteBuffer)
-            returnValue = Value.createValue(((ByteBuffer) value).array());
-          else if (value instanceof Utf8)
-            returnValue = Value.createValue( ((Utf8) value).getBytes() ) ;
-          else {
-            SpecificDatumWriter writer = new SpecificDatumWriter(fieldSchema);
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-            BinaryEncoder encoder = new BinaryEncoder(os);
-            try {
-              writer.write(value, encoder);
-              encoder.flush();
-            } catch (IOException e) {
-              e.printStackTrace();
-            }
-
-            returnValue = Value.createValue( os.toByteArray() ) ;
-          }
-
-          break;
-      }
-
+  private static byte[] copyIfNeeded(byte b[], int offset, int len) {
+    if (len != b.length || offset != 0) {
+      byte copy[] = new byte[len];
+      System.arraycopy(b, offset, copy, 0, copy.length);
+      b = copy;
     }
-    else
-      returnValue = Value.EMPTY_VALUE;
+    return b;
+  }
 
-    return returnValue;
+  public static byte[] toBytes(Encoder encoder, Object o) {
+
+    try {
+      if (o instanceof String) {
+        LOG.debug("String");
+        return ((String) o).getBytes("UTF-8");
+      } else if (o instanceof Utf8) {
+        LOG.debug("Utf8");
+        return copyIfNeeded(((Utf8) o).getBytes(), 0, ((Utf8) o).getLength());
+      } else if (o instanceof ByteBuffer) {
+        LOG.debug("ByteBuffer");
+        return copyIfNeeded(((ByteBuffer) o).array(), ((ByteBuffer) o).arrayOffset() + ((ByteBuffer) o).position(), ((ByteBuffer) o).remaining());
+      } else if (o instanceof Long) {
+        LOG.debug("Long");
+        return encoder.encodeLong((Long) o);
+      } else if (o instanceof Integer) {
+        LOG.debug("Integer");
+        return encoder.encodeInt((Integer) o);
+      } else if (o instanceof Short) {
+        LOG.debug("Short");
+        return encoder.encodeShort((Short) o);
+      } else if (o instanceof Byte) {
+        LOG.debug("Byte");
+        return encoder.encodeByte((Byte) o);
+      } else if (o instanceof Boolean) {
+        LOG.debug("Boolean");
+        return encoder.encodeBoolean((Boolean) o);
+      } else if (o instanceof Float) {
+        LOG.debug("Float");
+        return encoder.encodeFloat((Float) o);
+      } else if (o instanceof Double) {
+        LOG.debug("Double");
+        return encoder.encodeDouble((Double) o);
+      } else if (o instanceof Enum) {
+        LOG.debug("Enum");
+        return encoder.encodeInt(((Enum) o).ordinal());
+      }
+    } catch (IOException ioe) {
+      throw new RuntimeException(ioe);
+    }
+
+    throw new IllegalArgumentException("Uknown type " + o.getClass().getName());
   }
 
   public static Key createKey(List<String> majorPath, String minorPath){
@@ -175,7 +106,7 @@ public class OracleUtil{
     for (String majorComponent : majorPath){
       if (majorComponent.contains("/")){
         String majorComponentStrings[] = majorComponent.split("/");
-        Collections.addAll(majorComponents,majorComponentStrings);
+        Collections.addAll(majorComponents, majorComponentStrings);
       }
       else
         majorComponents.add(majorComponent);
@@ -339,7 +270,6 @@ public class OracleUtil{
           LOG.warn(OracleStoreConstants.HOST_NAME_PORT+" has invalid format. Default hostname:port was used.");
           tokens[i] = OracleStoreConstants.DEFAULT_HOST_NAME_PORT;
         }
-
       }
     }
     else{
