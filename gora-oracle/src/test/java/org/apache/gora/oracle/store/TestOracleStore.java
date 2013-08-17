@@ -282,28 +282,24 @@ public class TestOracleStore extends DataStoreTestBase {
   }
 
   @Test
-  @Ignore
   @Override
   public void testGetRecursive() throws IOException, Exception {
     super.testGetRecursive();
   }
 
   @Test
-  @Ignore
   @Override
   public void testGetDoubleRecursive() throws IOException, Exception {
     super.testGetDoubleRecursive();
   }
 
   @Test
-  @Ignore
   @Override
   public void testGetNested() throws IOException, Exception {
     super.testGetNested();
   }
 
   @Test
-  @Ignore
   @Override
   public void testGet3UnionField() throws IOException, Exception {
     super.testGet3UnionField();

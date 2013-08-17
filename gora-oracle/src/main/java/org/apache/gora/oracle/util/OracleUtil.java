@@ -24,6 +24,7 @@ import org.apache.avro.io.DatumWriter;
 import org.apache.avro.io.Encoder;
 import org.apache.avro.reflect.ReflectData;
 import org.apache.avro.reflect.ReflectDatumWriter;
+import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.avro.util.Utf8;
 import org.apache.gora.avro.PersistentDatumWriter;
 import org.apache.gora.oracle.store.OracleMapping;
@@ -143,6 +144,19 @@ public class OracleUtil{
             returnValue = Value.createValue(((ByteBuffer) value).array());
           else if (value instanceof Utf8)
             returnValue = Value.createValue( ((Utf8) value).getBytes() ) ;
+          else {
+            SpecificDatumWriter writer = new SpecificDatumWriter(fieldSchema);
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            BinaryEncoder encoder = new BinaryEncoder(os);
+            try {
+              writer.write(value, encoder);
+              encoder.flush();
+            } catch (IOException e) {
+              e.printStackTrace();
+            }
+
+            returnValue = Value.createValue( os.toByteArray() ) ;
+          }
 
           break;
       }

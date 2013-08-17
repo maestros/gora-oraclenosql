@@ -17,6 +17,11 @@
 package org.apache.gora.oracle.store;
 
 import org.apache.avro.Schema;
+import org.apache.avro.io.BinaryDecoder;
+import org.apache.avro.io.BinaryEncoder;
+import org.apache.avro.io.DecoderFactory;
+import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.avro.util.Utf8;
 import org.apache.gora.oracle.query.OracleQuery;
 import org.apache.gora.oracle.query.OracleResult;
@@ -39,7 +44,10 @@ import org.jdom.input.SAXBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -220,7 +228,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
   /**
    * Reads the schema file and converts it into a data structure to be used
    * @param mappingFilename The schema file to be mapped into a table
-   * @return OracleMapping  Object containing all necessary information to create tables
+   * @return OracleMapping Object containing all necessary information to create tables
    * @throws IOException
    */
   private OracleMapping readMapping(String mappingFilename) throws IOException {
@@ -229,7 +237,15 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
 
     try {
       SAXBuilder builder = new SAXBuilder();
-      Document doc = builder.build( getClass().getClassLoader().getResourceAsStream(mappingFilename) );
+      LOG.debug("about to parse: "+mappingFilename);
+      InputStream mappingFile = getClass().getClassLoader().getResourceAsStream(mappingFilename);
+
+      if (mappingFile==null){
+        LOG.error("mappingFile is null");
+        throw new IOException("Unable to open "+mappingFilename);
+      }
+
+      Document doc = builder.build(mappingFile);
 
       List<Element> classes = doc.getRootElement().getChildren("class");
 
@@ -270,6 +286,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
       throw new IOException(ex);
     }
 
+    LOG.debug("parse finished.");
     return mappingBuilder.build();
   }
 
@@ -306,7 +323,6 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
   public void createSchema() {
 
     if (schemaExists()){
-      LOG.debug("Schema: "+mapping.getMajorKey()+" already exists");
       return;
     }
 
@@ -540,11 +556,24 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
           persistent.put( persistentField.pos(), v );
           break;
         case UNION:
+
+          LOG.info("persistentField.schema()="+persistentField.schema().getTypes());
+          String type = persistentField.schema().getTypes().get(1).getName();
+          LOG.info("type="+type);
+
+          if (type.equals("bytes")){
             bb = ByteBuffer.wrap(val);
             persistent.put(persistentField.pos(),  bb);
+          }
+          else {
+            SpecificDatumReader reader = new SpecificDatumReader(persistentField.schema());
+            BinaryDecoder decoder = DecoderFactory.defaultFactory().createBinaryDecoder(val, null);
+            persistent.put(persistentField.pos(), reader.read(null, decoder));
+          }
+
           break;
         default:
-          LOG.debug("Type not considered: " + persistentField.schema().getType().name());
+          LOG.info("Type not considered: " + persistentField.schema().getType().name());
       }
 
     }
@@ -562,6 +591,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
   @Override
   public T get(K key, String[] fields) {
 
+    LOG.info("inside get");
     // trivial check for a null key
     if (key==null)
       return null;
@@ -576,7 +606,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
       return null;
     }
 
-    LOG.debug("multiGet size: "+kvResult.size());
+    LOG.info("multiGet size: "+kvResult.size());
 
     if (kvResult.size()==0)
       return null;
