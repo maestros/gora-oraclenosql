@@ -5,11 +5,15 @@ package org.apache.gora.oracle.store;
  */
 public class OracleStoreConstants {
 
-  public static final String DURABILITY_SYNCPOLICY = "durability.syncpolicy";
   /**
    * The mapping file to create the tables from
    */
   public static final String DEFAULT_MAPPING_FILE = "gora-oracle-mapping.xml";
+
+  /**
+   *
+   */
+  public static final String DURABILITY_SYNCPOLICY = "durability.syncpolicy";
   public static final String DURABILITY_REPLICAACKPOLICY = "durability.replicaackpolicy";
   public static final String CONSISTENCY = "consistency";
   public static final String TIME_UNIT = "time.unit";
