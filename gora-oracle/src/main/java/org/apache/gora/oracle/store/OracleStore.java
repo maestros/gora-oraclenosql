@@ -16,6 +16,23 @@
  */
 package org.apache.gora.oracle.store;
 
+import oracle.kv.Consistency;
+import oracle.kv.Durability;
+import oracle.kv.KVStore;
+import oracle.kv.KVStoreConfig;
+import oracle.kv.KVStoreFactory;
+import oracle.kv.Key;
+import oracle.kv.Value;
+import oracle.kv.DurabilityException;
+import oracle.kv.FaultException;
+import oracle.kv.Direction;
+import oracle.kv.Depth;
+import oracle.kv.ValueVersion;
+import oracle.kv.RequestTimeoutException;
+import oracle.kv.OperationFactory;
+import oracle.kv.Operation;
+import oracle.kv.OperationExecutionException;
+
 import org.apache.avro.Schema;
 import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.BinaryEncoder;
@@ -29,8 +46,8 @@ import org.apache.gora.oracle.query.OracleQuery;
 import org.apache.gora.oracle.query.OracleResult;
 import org.apache.gora.oracle.store.OracleMapping.OracleMappingBuilder;
 import org.apache.gora.oracle.util.OracleUtil;
+import org.apache.gora.util.OperationNotSupportedException;
 
-import oracle.kv.*;
 import org.apache.gora.persistency.State;
 import org.apache.gora.persistency.StateManager;
 import org.apache.gora.persistency.StatefulHashMap;
@@ -50,7 +67,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
@@ -1065,14 +1081,15 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
       return result;
     }
 
-    Iterator<Key> iter = OracleUtil.getPrimaryKeys(kvstore, query, mapping.getTableName());
     /*
+    Iterator<Key> iter = OracleUtil.getPrimaryKeys(kvstore, query, mapping.getTableName());
+
     LOG.info("iterating...");
     while (iter.hasNext())
       LOG.info("key:"+iter.next().toString());
     */
 
-    iter = OracleUtil.getPrimaryKeys(kvstore, query, mapping.getTableName());
+    Iterator<Key> iter = OracleUtil.getPrimaryKeys(kvstore, query, mapping.getTableName());
 
     result = new OracleResult<K, T>(this, query, iter);
     ((OracleQuery) query).setResult(result);
@@ -1092,7 +1109,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
   @Override
   public List<PartitionQuery<K, T>> getPartitions(Query<K, T> query) throws IOException {
     //TODO
-    return null;
+    throw new OperationNotSupportedException("getPartitions is not yet supported for Oracle NoSQL store.");
   }
 
   /**
