@@ -1107,7 +1107,8 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
   }
 
   @Override
-  public List<PartitionQuery<K, T>> getPartitions(Query<K, T> query) throws IOException {
+  public List<PartitionQuery<K, T>> getPartitions(Query<K, T> query)
+          throws IOException,OperationNotSupportedException {
     //TODO
     throw new OperationNotSupportedException("getPartitions is not yet supported for Oracle NoSQL store.");
   }
