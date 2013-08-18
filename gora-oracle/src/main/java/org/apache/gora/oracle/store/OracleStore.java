@@ -852,6 +852,35 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
   }
 
   /**
+   * Searches the Oracle NoSQL to verify if the persistent object exists or not.
+   * @param obj the persistent object to search for
+   * @return true of false depending on if the object exists of not
+   */
+  public boolean exists(T obj){
+
+    //get the key from the persistent object
+    String key = (String)getKeyFromPersistent(obj);
+
+    //create the Oracle Key for the primary key
+    List<String> majorComponentsForParent = new ArrayList<String>();
+    majorComponentsForParent.add(OracleStore.getPrimaryKeyTable());
+    majorComponentsForParent.add(mapping.getTableName());
+    Key primaryKey = Key.createKey(majorComponentsForParent, key);
+
+    //create the Oracle Key for the persistent
+    List<String> majorComponentsForPersistent = new ArrayList<String>();
+    majorComponentsForPersistent.add(mapping.getTableName());
+    majorComponentsForPersistent.add(key);
+    Key persistentKey = Key.createKey(majorComponentsForPersistent, mapping.getPrimaryKey());
+
+    //check to see if the primary key and the persistent key exist in the db
+    if ( (kvstore.get(primaryKey) == null) || (kvstore.get(persistentKey) == null) )
+      return false;
+    else
+      return true;
+  }
+
+  /**
    * Deletes a persistent object from the database.
    * It deletes all its fields and its primary key.
    * The object that is deleted is depended on the primary key field
