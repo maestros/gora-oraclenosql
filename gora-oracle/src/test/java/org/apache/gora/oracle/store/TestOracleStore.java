@@ -457,6 +457,70 @@ public class TestOracleStore extends DataStoreTestBase {
     assertNull(webPage);
   }
 
+  /**
+   * Checks that when writing a top level union <code>['null','type']</code> the value is written in raw format.
+   * @throws Exception
+   */
+  @Test
+  public void assertTopLevelUnions() throws Exception {
+    WebPage page = webPageStore.newPersistent();
+
+    // Write webpage data
+    page.setUrl(new Utf8("http://example.com"));
+    byte[] contentBytes = "example content in example.com".getBytes();
+    ByteBuffer buff = ByteBuffer.wrap(contentBytes);
+    page.setContent(buff);
+    webPageStore.put("com.example/http", page);
+    webPageStore.flush() ;
+
+    // set the major key components for retrieval of the correct record
+    List<String> majorComponents = new ArrayList<String>();
+    majorComponents.add("WebPage");
+    majorComponents.add("com.example");
+    majorComponents.add("http");
+
+    byte[] actualBytes; //byte array to store the retrieved bytes
+
+    //get the actualBytes directly from the Oracle NoSQL database
+    Key key = Key.createKey(majorComponents, "content");
+    actualBytes = getTestDriver().get(key);
+
+    assertNotNull(actualBytes);
+    assertTrue(Arrays.equals(actualBytes, contentBytes));
+  }
+
+  /**
+   * Checks that when writing a top level union <code>['null','type']
+   * the <code>null</code> value is treated properly.
+   * @throws Exception
+   */
+  @Test
+  public void assertTopLevelUnionsNull() throws Exception {
+    WebPage page = webPageStore.newPersistent();
+
+    // Write webpage data
+    page.setUrl(new Utf8("http://example.com"));
+    page.setContent(null);     // This won't change internal field status to dirty, so
+    page.setDirty("content") ; // need to change it manually
+    webPageStore.put("com.example/http", page);
+    webPageStore.flush() ;
+
+    // Read directly from Oracle NoSQL
+    // set the major key components for retrieval of the correct record
+    List<String> majorComponents = new ArrayList<String>();
+    majorComponents.add("WebPage");
+    majorComponents.add("com.example");
+    majorComponents.add("http");
+
+    byte[] actualBytes; //byte array to store the retrieved bytes
+
+    //get the actualBytes directly from the Oracle NoSQL database
+    Key key = Key.createKey(majorComponents, "content");
+    actualBytes = getTestDriver().get(key);
+
+    assertTrue(actualBytes == null || actualBytes.length == 0) ;
+  }
+
   @Test
   @Ignore
   @Override
