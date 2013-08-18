@@ -23,7 +23,6 @@ import org.apache.avro.util.Utf8;
 import org.apache.gora.examples.generated.Employee;
 import org.apache.gora.examples.generated.WebPage;
 import org.apache.gora.oracle.GoraOracleTestDriver;
-import org.apache.gora.oracle.util.OracleUtil;
 import org.apache.gora.store.DataStore;
 import org.apache.gora.store.DataStoreFactory;
 import org.apache.gora.store.DataStoreTestBase;
@@ -35,10 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
@@ -49,7 +45,6 @@ import static org.junit.Assert.assertEquals;
 public class TestOracleStore extends DataStoreTestBase {
 
   public static final Logger log = LoggerFactory.getLogger(TestOracleStore.class);
-  private Configuration conf;
 
   static {
     setTestDriver(new GoraOracleTestDriver());
@@ -60,7 +55,7 @@ public class TestOracleStore extends DataStoreTestBase {
   @Override
   protected DataStore<String, Employee> createEmployeeDataStore() throws IOException {
     return DataStoreFactory.createDataStore(OracleStore.class, String.class,
-            Employee.class, conf);
+            Employee.class, null);
   }
 
   @SuppressWarnings("unchecked")
@@ -68,7 +63,7 @@ public class TestOracleStore extends DataStoreTestBase {
   @Override
   protected DataStore<String, WebPage> createWebPageDataStore() throws IOException {
     return DataStoreFactory.createDataStore(OracleStore.class, String.class,
-            WebPage.class, conf);
+            WebPage.class, null);
   }
 
   public GoraOracleTestDriver getTestDriver() {
@@ -80,18 +75,22 @@ public class TestOracleStore extends DataStoreTestBase {
     super.setUp();
 
     String[] tables = {"Employee", "WebPage", "PrimaryKeys"};
-    dumpDB(tables);
+    dumpTables(tables);
   }
 
   @Override
   public void tearDown() throws Exception {
     super.tearDown();
     String[] tables = {"Employee", "WebPage", "PrimaryKeys"};
-    dumpDB(tables);
+    dumpTables(tables);
   }
 
-  private void dumpDB(String[] tables){
-    log.debug("start: dumpDB");
+  /**
+   * Utility method that dumps the contents of the database tables.
+   * @param tables the tables to be dumped.
+   */
+  private void dumpTables(String[] tables){
+    log.debug("start: dumpTables");
     ArrayList<String> majorComponents = new ArrayList<String>();
 
     int records=0;
@@ -117,7 +116,7 @@ public class TestOracleStore extends DataStoreTestBase {
     if (records==0)
       log.debug("no records found.");
 
-    log.debug("end: dumpDB");
+    log.debug("end: dumpTables");
   }
 
   @Test
@@ -161,6 +160,13 @@ public class TestOracleStore extends DataStoreTestBase {
   @Override
   public void testPut() throws IOException, Exception {
     super.testPut();
+  }
+
+  @Override
+  public void assertPut(Employee employee) throws IOException {
+    employeeStore.put(employee.getSsn().toString(),employee);
+    employeeStore.flush();
+    assertTrue(((OracleStore) employeeStore).exists(employee));
   }
 
   @Test
@@ -261,6 +267,24 @@ public class TestOracleStore extends DataStoreTestBase {
   @Override
   public void testPutMap() throws IOException, Exception {
     super.testPutMap();
+  }
+
+  @Override
+  public void assertPutMap() throws IOException {
+    //get the WebPage that was created in testPutMap()
+    WebPage page = webPageStore.get("com.example/http") ;
+
+    //get its outlinks
+    Map<Utf8,Utf8> outlinks = page.getOutlinks();
+
+    //check that outlinks map is not null
+    assertNotNull(outlinks);
+
+    //get the value from the outlinks map with the key "http://example2.com"
+    String anchor2 = outlinks.get(new Utf8("http://example2.com")).toString();
+
+    //check that it is the same with the one that was added in testPutMap()
+    assertEquals("anchor2", anchor2);
   }
 
   @Test
@@ -394,8 +418,12 @@ public class TestOracleStore extends DataStoreTestBase {
     super.testDeleteByQueryFields();
   }
 
+  /**
+   * Assert that dataStore.delete(T) works as expected.
+   * @throws Exception
+   */
   @Test
-  public void testDeletePersistentObject() throws IOException, Exception {
+  public void testDeletePersistentObject() throws Exception {
 
     OracleStore<String,WebPage> dataStore = (OracleStore)getTestDriver().createDataStore(String.class,WebPage.class);
 
