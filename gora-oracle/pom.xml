@@ -103,6 +103,10 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+            </plugin>
         </plugins>
     </build>
 
@@ -160,6 +164,12 @@
 	            <artifactId>jms</artifactId>
 	          </exclusion>
             </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.rbuck</groupId>
+            <artifactId>java-codecs</artifactId>
+            <version>1.0.1</version>
         </dependency>
 
         <!-- Testing Dependencies -->
