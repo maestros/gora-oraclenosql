@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import org.apache.commons.codec.binary.Base64;
 
 public class OracleResult<K, T extends PersistentBase> extends ResultBase<K, T> {
 
@@ -112,6 +113,7 @@ public class OracleResult<K, T extends PersistentBase> extends ResultBase<K, T> 
       }
 
       keysVisited.add((String)key);
+      key = (K)OracleUtil.decodeKey((String)key);
       LOG.debug("getKey=" + (String) key);
       persistent = store.get(key, null);
 
@@ -121,7 +123,8 @@ public class OracleResult<K, T extends PersistentBase> extends ResultBase<K, T> 
     else
     {
       if (key==null){
-        key = (K)query.getStartKey();
+        key = query.getStartKey();
+        key = (K)OracleUtil.decodeKey((String)key);
         LOG.debug("single getKey=" + (String) key);
         persistent = store.get(key, null);
 

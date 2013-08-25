@@ -16,20 +16,24 @@
  */
 package org.apache.gora.oracle.util;
 
+import com.buck.common.codec.CodecDecoder;
+import com.buck.common.codec.CodecEncoder;
 import oracle.kv.Direction;
 import oracle.kv.Depth;
 import oracle.kv.KVStore;
 import oracle.kv.Key;
 import oracle.kv.KeyRange;
 import org.apache.avro.util.Utf8;
+import org.apache.commons.codec.DecoderException;
 import org.apache.gora.oracle.encoders.Encoder;
 import org.apache.gora.oracle.store.OracleStore;
 import org.apache.gora.oracle.store.OracleStoreConstants;
 import org.apache.gora.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.buck.common.codec.Base32Hex;
 
-import java.io.IOException;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -141,7 +145,30 @@ public class OracleUtil{
       majorComponents.add(keyComponents[i]);
 
     return Key.createKey(majorComponents);
+  }
 
+  public static String encodeKey(String key){
+
+    if (key==null)
+      return null;
+
+    Base32Hex base32Hex = new Base32Hex();
+    CodecEncoder ce = base32Hex.newEncoder();
+    String encoded = new String(ce.encode(key.getBytes()));
+
+    return encoded;
+  }
+
+  public static String decodeKey(String key){
+
+    if (key==null)
+      return null;
+
+    Base32Hex base32Hex = new Base32Hex();
+    CodecDecoder cd = base32Hex.newDecoder();
+    String decoded = new String(cd.decode(key.getBytes()));
+
+    return decoded;
   }
 
   public static Key createKey(String fullKey){
@@ -191,7 +218,7 @@ public class OracleUtil{
     if ( (startkey==null) && (endkey==null) )
       keyRange = null;  //in case both keys are null, do not create a keyrange in order to get all keys
     else
-      keyRange = new KeyRange(startkey, true, endkey, true);
+      keyRange = new KeyRange(startkey, true, endkey, true); //inclusive
 
     Iterator<Key> iter = kvStore.multiGetKeysIterator(Direction.FORWARD, 20, primaryKey, keyRange, Depth.CHILDREN_ONLY);
 

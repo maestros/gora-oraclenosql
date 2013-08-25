@@ -40,6 +40,7 @@ import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.avro.util.Utf8;
+import org.apache.commons.lang.StringUtils;
 import org.apache.gora.avro.PersistentDatumWriter;
 import org.apache.gora.oracle.encoders.Encoder;
 import org.apache.gora.oracle.query.OracleQuery;
@@ -182,7 +183,8 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
    */
   private void readProperties(Properties properties) {
 
-    mappingFile = DataStoreFactory.getMappingFile(properties, this, OracleStoreConstants.DEFAULT_MAPPING_FILE);
+      mappingFile = DataStoreFactory.getMappingFile(properties, this, OracleStoreConstants.DEFAULT_MAPPING_FILE);
+
 
     storeName = DataStoreFactory.findProperty(properties, this, OracleStoreConstants.STORE_NAME, OracleStoreConstants.DEFAULT_STORE_NAME);
     hostNamePorts = OracleUtil.getHostPorts(DataStoreFactory.findProperty(properties, this, OracleStoreConstants.HOST_NAME_PORT, OracleStoreConstants.DEFAULT_HOST_NAME_PORT), OracleStoreConstants.PROPERTIES_SEPARATOR);
@@ -290,7 +292,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
           String primaryKeyColumn = primaryKeyEl.getAttributeValue("column");
 
           mappingBuilder.setPrimaryKey( primaryKeyField );
-          mappingBuilder.addField( primaryKeyField, primaryKeyColumn );
+          mappingBuilder.addField(primaryKeyField, primaryKeyColumn);
 
           List<Element> fields = classElement.getChildren("field");
 
@@ -730,7 +732,9 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
     if (key==null)
       return null;
 
-    Key myKey = OracleUtil.createTableKey((String) key, mapping.getTableName());
+    String persistentKey = OracleUtil.encodeKey((String)key);
+
+    Key myKey = OracleUtil.createTableKey(persistentKey, mapping.getTableName());
 
     SortedMap<Key, ValueVersion> kvResult;
     try {
@@ -782,10 +786,13 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
     /*
       Add the key to the list of primary keys, for easy access
      */
+
+    String persistentKey = OracleUtil.encodeKey((String)key);
+
     List<String> majorComponentsForParent = new ArrayList<String>();
     majorComponentsForParent.add(OracleStore.getPrimaryKeyTable());
     majorComponentsForParent.add(mapping.getTableName());
-    Key primaryKey = Key.createKey(majorComponentsForParent, (String) key);
+    Key primaryKey = Key.createKey(majorComponentsForParent, persistentKey);
 
     opList.add(of.createPut(primaryKey, Value.EMPTY_VALUE));
 
@@ -797,7 +804,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
 
     // Define the major and minor path components for the key
     majorComponents.add(mapping.getTableName());
-    majorComponents.add(key.toString());// keys in Oracle NoSQL are strings
+    majorComponents.add(persistentKey);
 
     for ( Schema.Field field : fields ) {
       Object value = persistent.get( field.pos() );
@@ -822,7 +829,8 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
       }
     }
 
-    LOG.info("Added a put operation for key: "+majorComponents.get(0)+"/"+majorComponents.get(1));
+    LOG.info("Added a put operation for key: "+majorComponents.get(0)+"/"+OracleUtil.decodeKey(majorComponents.get(1)));
+    LOG.debug(majorComponents.get(1));
     operations.add(opList);
   }
 
@@ -876,6 +884,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
 
     //get the key from the persistent object
     String key = (String)getKeyFromPersistent(obj);
+    key = OracleUtil.encodeKey(key);
 
     //create the Oracle Key for the primary key
     List<String> majorComponentsForParent = new ArrayList<String>();
@@ -1000,7 +1009,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
       e.printStackTrace();
     }
 
-    LOG.debug("recordsDeleted="+recordsDeleted);
+    LOG.debug("recordsDeleted=" + recordsDeleted);
     return recordsDeleted;
   }
 
@@ -1033,8 +1042,9 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
    */
   private List<Operation> deleteRecord(String key){
     List<Operation> opList = new ArrayList<Operation>();
-    OperationFactory of = kvstore.getOperationFactory();
-    Key oracleKey = OracleUtil.createTableKey(key, mapping.getTableName());
+    OperationFactory of = kvstore.getOperationFactory();;
+    String persistentKey = OracleUtil.encodeKey((String)key);
+    Key oracleKey = OracleUtil.createTableKey(persistentKey, mapping.getTableName());
     LOG.debug("Key to be deleted: "+key.toString());
     kvstore.multiDelete(oracleKey, null,
             Depth.PARENT_AND_DESCENDANTS);
@@ -1043,8 +1053,8 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
     List<String> primaryKeyComponents = new ArrayList<String>();
     primaryKeyComponents.add(OracleStore.getPrimaryKeyTable());
     primaryKeyComponents.add(mapping.getTableName());
-    oracleKey = Key.createKey(primaryKeyComponents, key);
-    LOG.debug("Primary Key to be deleted: "+oracleKey.toString());
+    oracleKey = Key.createKey(primaryKeyComponents, persistentKey);
+    LOG.debug("Primary Key to be deleted: " + oracleKey.toString());
     opList.add(of.createDelete(oracleKey));
     return opList;
   }
@@ -1057,17 +1067,18 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
    */
   @Override
   public Result<K, T> execute(Query<K, T> query) {
+    LOG.debug("execute");
 
     if (((OracleQuery) query).isExecuted())
       return ((OracleQuery) query).getResult();
 
     OracleResult result;
-    String startkey = (String) query.getStartKey();
-    String endkey = (String) query.getEndKey();
-    String setKey = (String) query.getKey();
+    String startkey = (String)query.getStartKey();
+    String endkey = (String)query.getEndKey();
+    String setKey = (String)query.getKey();
 
-    LOG.debug("startkey="+startkey);
-    LOG.debug("endkey="+endkey);
+    LOG.debug("startkey=" + startkey);
+    LOG.debug("endkey=" + endkey);
 
     /*
      * in case startkey == endkey then
@@ -1080,14 +1091,6 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
       ((OracleQuery) query).setExecuted(true);
       return result;
     }
-
-    /*
-    Iterator<Key> iter = OracleUtil.getPrimaryKeys(kvstore, query, mapping.getTableName());
-
-    LOG.info("iterating...");
-    while (iter.hasNext())
-      LOG.info("key:"+iter.next().toString());
-    */
 
     Iterator<Key> iter = OracleUtil.getPrimaryKeys(kvstore, query, mapping.getTableName());
 

@@ -23,6 +23,7 @@ import org.apache.avro.util.Utf8;
 import org.apache.gora.examples.generated.Employee;
 import org.apache.gora.examples.generated.WebPage;
 import org.apache.gora.oracle.GoraOracleTestDriver;
+import org.apache.gora.oracle.util.OracleUtil;
 import org.apache.gora.store.DataStore;
 import org.apache.gora.store.DataStoreFactory;
 import org.apache.gora.store.DataStoreTestBase;
@@ -45,6 +46,7 @@ import static org.junit.Assert.assertEquals;
 public class TestOracleStore extends DataStoreTestBase {
 
   public static final Logger log = LoggerFactory.getLogger(TestOracleStore.class);
+  private Configuration conf;
 
   static {
     setTestDriver(new GoraOracleTestDriver());
@@ -55,7 +57,7 @@ public class TestOracleStore extends DataStoreTestBase {
   @Override
   protected DataStore<String, Employee> createEmployeeDataStore() throws IOException {
     return DataStoreFactory.createDataStore(OracleStore.class, String.class,
-            Employee.class, null);
+            Employee.class, conf);
   }
 
   @SuppressWarnings("unchecked")
@@ -63,7 +65,7 @@ public class TestOracleStore extends DataStoreTestBase {
   @Override
   protected DataStore<String, WebPage> createWebPageDataStore() throws IOException {
     return DataStoreFactory.createDataStore(OracleStore.class, String.class,
-            WebPage.class, null);
+            WebPage.class, conf);
   }
 
   public GoraOracleTestDriver getTestDriver() {
@@ -186,8 +188,7 @@ public class TestOracleStore extends DataStoreTestBase {
     //set the major key components for retrieval of the correct record
     List<String> majorComponents = new ArrayList<String>();
     majorComponents.add("WebPage");
-    majorComponents.add("com.example");
-    majorComponents.add("http");
+    majorComponents.add(OracleUtil.encodeKey("com.example/http"));
 
     byte[] bytes; //byte array to store the retrieved bytes
 
@@ -226,8 +227,7 @@ public class TestOracleStore extends DataStoreTestBase {
     // set the major key components for retrieval of the correct record
     List<String> majorComponents = new ArrayList<String>();
     majorComponents.add("WebPage");
-    majorComponents.add("com.example");
-    majorComponents.add("http");
+    majorComponents.add(OracleUtil.encodeKey("com.example/http"));
 
     byte[] actualBytes; //byte array to store the retrieved bytes
 
@@ -476,8 +476,7 @@ public class TestOracleStore extends DataStoreTestBase {
     // set the major key components for retrieval of the correct record
     List<String> majorComponents = new ArrayList<String>();
     majorComponents.add("WebPage");
-    majorComponents.add("com.example");
-    majorComponents.add("http");
+    majorComponents.add(OracleUtil.encodeKey("com.example/http"));
 
     byte[] actualBytes; //byte array to store the retrieved bytes
 
@@ -509,8 +508,7 @@ public class TestOracleStore extends DataStoreTestBase {
     // set the major key components for retrieval of the correct record
     List<String> majorComponents = new ArrayList<String>();
     majorComponents.add("WebPage");
-    majorComponents.add("com.example");
-    majorComponents.add("http");
+    majorComponents.add(OracleUtil.encodeKey("com.example/http"));
 
     byte[] actualBytes; //byte array to store the retrieved bytes
 

@@ -17,10 +17,14 @@
 package org.apache.gora.oracle.query;
 
 import oracle.kv.KVStore;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.gora.oracle.store.OracleStore;
+import org.apache.gora.oracle.util.OracleUtil;
 import org.apache.gora.persistency.impl.PersistentBase;
 import org.apache.gora.query.impl.QueryBase;
 import org.apache.gora.store.DataStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 
@@ -28,6 +32,11 @@ import java.util.ArrayList;
  * Oracle NoSQL specific implementation of the {@link org.apache.gora.query.Query} interface.
  */
 public class OracleQuery<K, T extends PersistentBase> extends QueryBase<K, T> {
+
+  /**
+   * Helper to write useful information into the logs
+   */
+  private static final Logger LOG = LoggerFactory.getLogger(OracleQuery.class);
 
   private boolean executed;
 
@@ -46,6 +55,52 @@ public class OracleQuery<K, T extends PersistentBase> extends QueryBase<K, T> {
   @Override
   public OracleStore<K, T> getDataStore() {
     return (OracleStore<K, T>) super.getDataStore();
+  }
+
+  @Override
+  public void setKey(K key) {
+    setKeyRange(key, key);
+  }
+
+  @Override
+  public void setStartKey(K startKey) {
+    K persistentKey = startKey;
+
+    if (persistentKey!=null)
+      persistentKey = (K) OracleUtil.encodeKey((String)startKey);
+    this.startKey = persistentKey;
+
+    LOG.debug("setStartKey="+this.startKey);
+  }
+
+  @Override
+  public void setEndKey(K endKey) {
+    K persistentKey = endKey;
+
+    if (persistentKey!=null)
+      persistentKey = (K) OracleUtil.encodeKey((String)endKey);
+    this.endKey = persistentKey;
+
+    LOG.debug("setEndKey="+this.endKey);
+  }
+
+  @Override
+  public void setKeyRange(K startKey, K endKey) {
+    K persistentStartKey = startKey;
+
+    if (startKey!=null)
+      persistentStartKey = (K) OracleUtil.encodeKey((String)startKey);
+
+    K persistentEndKey = endKey;
+
+    if (endKey!=null)
+      persistentEndKey = (K) OracleUtil.encodeKey((String)endKey);
+
+    this.startKey = persistentStartKey;
+    this.endKey = persistentEndKey;
+
+    LOG.debug("setStartKey="+this.startKey);
+    LOG.debug("setEndKey="+this.endKey);
   }
 
   public boolean isExecuted() {
