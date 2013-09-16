@@ -40,7 +40,6 @@ import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.avro.util.Utf8;
-import org.apache.commons.lang.StringUtils;
 import org.apache.gora.avro.PersistentDatumWriter;
 import org.apache.gora.oracle.encoders.Encoder;
 import org.apache.gora.oracle.query.OracleQuery;
@@ -76,6 +75,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * Main class for the Gora-OracleNoSQL datastore module.
  * @author Apostolos Giannakidis
  */
 public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> {
@@ -86,7 +86,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
   private static final Logger LOG = LoggerFactory.getLogger(OracleStore.class);
 
   private volatile OracleMapping mapping; //the mapping to the datastore
-  private Encoder encoder;
+  private Encoder encoder;  // the serialisation encoder
 
   /*********************************************************************
    * Variables and references to Oracle NoSQL properties
@@ -98,15 +98,17 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
    * the name(s) of the host to connect (could be the IP)
    * and the port(s) of the oracle kv store to connect to
    */
-  private static String[] hostNamePorts;
+  private static String[] hostNamePorts;  //the list of hostnames and ports to connect to
 
   private static String mappingFile;  //the filename of the mapping (xml) file
   private static String primaryKeyTable;  //the name of the table that stores the primary keys
 
+  /*
+   * Variables that hold the session configuration parameters, as defined in the properties file
+   */
   private static int readTimeout;
   private static int openTimeout;
   private static int requestTimeout;
-
   private static Durability.ReplicaAckPolicy durabilityReplicaAckPolicy;
   private static Durability.SyncPolicy durabilitySyncPolicy;
   private static Consistency consistency;
@@ -317,10 +319,23 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
   }
 
 
+  /**
+   * Wrapper method for the extended fromBytes method. It uses the default encoder.
+   * @param schema  The schema type of the data
+   * @param data  the data
+   * @return  the deserialised Object
+   */
   public Object fromBytes(Schema schema, byte data[]) {
     return fromBytes(encoder, schema, data);
   }
 
+  /**
+   * Method for deserialising serialised values.
+   * @param encoder The encoder to use
+   * @param schema  The schema type of the data
+   * @param data  the data
+   * @return  the deserialised Object
+   */
   public static Object fromBytes(Encoder encoder, Schema schema, byte data[]) {
     switch (schema.getType()) {
       case BOOLEAN:
@@ -716,7 +731,7 @@ public class OracleStore<K,T extends PersistentBase> extends DataStoreBase<K,T> 
 
     }
 
-    stateManager.clearDirty(persistent);
+    stateManager.clearDirty(persistent);  //cleans the state manager
     return persistent;
   }
 

@@ -24,7 +24,7 @@ import oracle.kv.KVStore;
 import oracle.kv.Key;
 import oracle.kv.KeyRange;
 import org.apache.avro.util.Utf8;
-import org.apache.commons.codec.DecoderException;
+import org.apache.commons.lang.StringUtils;
 import org.apache.gora.oracle.encoders.Encoder;
 import org.apache.gora.oracle.store.OracleStore;
 import org.apache.gora.oracle.store.OracleStoreConstants;
@@ -33,14 +33,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.buck.common.codec.Base32Hex;
 
-import java.io.*;
+import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * Utility class that provides static utility methods
+ * used mainly by the Gora-Oracle data store.
+ * @author Apostolos Giannakidis
+ */
 public class OracleUtil{
 
   /**
@@ -48,8 +52,9 @@ public class OracleUtil{
    */
   private static final Logger LOG = LoggerFactory.getLogger(OracleUtil.class);
 
-  private static final Charset UTF8_CHARSET = Charset.forName("UTF-8");
-
+  /**
+   * Utility method to be used by the toBytes method.
+   */
   private static byte[] copyIfNeeded(byte b[], int offset, int len) {
     if (len != b.length || offset != 0) {
       byte copy[] = new byte[len];
@@ -59,6 +64,12 @@ public class OracleUtil{
     return b;
   }
 
+  /**
+   * Serialises the given object using the given encoder.
+   * @param encoder the encoder to user
+   * @param o the object to serialise
+   * @return the serialised byte array
+   */
   public static byte[] toBytes(Encoder encoder, Object o) {
 
     try {
@@ -103,6 +114,12 @@ public class OracleUtil{
     throw new IllegalArgumentException("Uknown type " + o.getClass().getName());
   }
 
+  /**
+   * Creates an Oracle NoSQL Key based on the major and minor key paths
+   * @param majorPath the majorPath key path
+   * @param minorPath the minorPath key path
+   * @return the Oracle NoSQL Key
+   */
   public static Key createKey(List<String> majorPath, String minorPath){
 
     List<String> majorComponents = new ArrayList<String>();
@@ -136,6 +153,12 @@ public class OracleUtil{
     return returnKey;
   }
 
+  /**
+   * Returns an Oracle NoSQL key based on the
+   * key components of the supplied string
+   * @param key the key string
+   * @return the Oracle NoSQL key
+   */
   public static Key keyFromString(String key)
   {
     List<String> majorComponents = new ArrayList<String>();
@@ -147,6 +170,15 @@ public class OracleUtil{
     return Key.createKey(majorComponents);
   }
 
+  public static String padKey(String key, char padChar, int length){
+    return StringUtils.leftPad(key, length, padChar);
+  }
+
+  /**
+   * Encodes the key based on the base32hex encoding
+   * @param key the key to be encoded
+   * @return the base32hex encoded key
+   */
   public static String encodeKey(String key){
 
     if (key==null)
@@ -159,6 +191,11 @@ public class OracleUtil{
     return encoded;
   }
 
+  /**
+   * Decodes a base32hex string
+   * @param key the base32hex-encoded key to be decoded
+   * @return the decoded string
+   */
   public static String decodeKey(String key){
 
     if (key==null)
@@ -171,12 +208,15 @@ public class OracleUtil{
     return decoded;
   }
 
+  /**
+   * Creates an Oracle NoSQL Key based on the String full key path.
+   * @param fullKey the full key based on which the Oracle NoSQL Key is created
+   * @return the Oracle NoSQL Key
+   */
   public static Key createKey(String fullKey){
 
-    if (fullKey==null){
-      LOG.error("Invalid fullKey: fullKey was null.");
+    if (fullKey==null)
       return null;
-    }
 
     Key returnKey;
     String[] keyPaths;
@@ -206,6 +246,14 @@ public class OracleUtil{
     return returnKey;
   }
 
+  /**
+   * Gets the primary keys from the PrimaryKeys table
+   * that match the range specified from the query.
+   * @param kvStore the Oracle KVStore to get the keys
+   * @param query the query that contains the start and end key
+   * @param tableName the name of the table of the datastore
+   * @return an iterator of the returned primary keys
+   */
   public static Iterator<Key> getPrimaryKeys(KVStore kvStore, Query query, String tableName){
 
     String startkey = (String)query.getStartKey();
@@ -239,6 +287,12 @@ public class OracleUtil{
     return keyPath;
   }
 
+  /**
+   * Creates an Oracle NoSQL Key based on the table name and the persistent key
+   * @param key the key of the persistent object
+   * @param tableName the name of the table (i.e. the first component of the major key)
+   * @return the Oracle NoSQL Key
+   */
   public static Key createTableKey(String key, String tableName){
     /**
      * majorKey stores the table name and

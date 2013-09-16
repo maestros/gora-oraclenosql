@@ -30,6 +30,7 @@ import java.util.ArrayList;
 
 /**
  * Oracle NoSQL specific implementation of the {@link org.apache.gora.query.Query} interface.
+ * @author Apostolos Giannakidis
  */
 public class OracleQuery<K, T extends PersistentBase> extends QueryBase<K, T> {
 
@@ -38,10 +39,13 @@ public class OracleQuery<K, T extends PersistentBase> extends QueryBase<K, T> {
    */
   private static final Logger LOG = LoggerFactory.getLogger(OracleQuery.class);
 
-  private boolean executed;
+  private boolean executed; //flag to indicate if the query has been executed or if it is a new one
 
-  OracleResult result;
+  OracleResult result;  //the cached result.
 
+  /**
+   * Default Constructor
+   */
   public OracleQuery() {
     super(null);
     executed=false;
@@ -62,6 +66,10 @@ public class OracleQuery<K, T extends PersistentBase> extends QueryBase<K, T> {
     setKeyRange(key, key);
   }
 
+  /**
+   * Sets the startKey of the query range. The key is encoded properly.
+   * @param startKey the lower limit of the query range
+   */
   @Override
   public void setStartKey(K startKey) {
     K persistentKey = startKey;
@@ -69,10 +77,15 @@ public class OracleQuery<K, T extends PersistentBase> extends QueryBase<K, T> {
     if (persistentKey!=null)
       persistentKey = (K) OracleUtil.encodeKey((String)startKey);
     this.startKey = persistentKey;
+    executed=false;
 
     LOG.debug("setStartKey="+this.startKey);
   }
 
+  /**
+   * Sets the endKey of the query range. The key is encoded properly.
+   * @param endKey the upper limit of the query range
+   */
   @Override
   public void setEndKey(K endKey) {
     K persistentKey = endKey;
@@ -80,10 +93,16 @@ public class OracleQuery<K, T extends PersistentBase> extends QueryBase<K, T> {
     if (persistentKey!=null)
       persistentKey = (K) OracleUtil.encodeKey((String)endKey);
     this.endKey = persistentKey;
+    executed=false;
 
     LOG.debug("setEndKey="+this.endKey);
   }
 
+  /**
+   * Sets the startKey and the endKey of the query range. The keys are encoded properly.
+   * @param startKey  the lower limit of the query range
+   * @param endKey  the upper limit of the query range
+   */
   @Override
   public void setKeyRange(K startKey, K endKey) {
     K persistentStartKey = startKey;
@@ -98,11 +117,13 @@ public class OracleQuery<K, T extends PersistentBase> extends QueryBase<K, T> {
 
     this.startKey = persistentStartKey;
     this.endKey = persistentEndKey;
+    executed=false;
 
     LOG.debug("setStartKey="+this.startKey);
     LOG.debug("setEndKey="+this.endKey);
   }
 
+  /** Setters and getters for the fields **/
   public boolean isExecuted() {
     return executed;
   }

@@ -28,6 +28,7 @@ import java.util.*;
 /**
  * Mapping definitions for Oracle NoSQL. Thread safe.
  * It holds a definition for a single table.
+ * @author Apostolos Giannakidis
  */
 public class OracleMapping {
   private static final Logger LOG = LoggerFactory.getLogger(OracleMapping.class);

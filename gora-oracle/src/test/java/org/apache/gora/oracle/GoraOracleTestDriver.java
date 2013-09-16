@@ -1,40 +1,38 @@
 package org.apache.gora.oracle;
 
-
 import oracle.kv.*;
 import org.apache.gora.GoraTestDriver;
 import org.apache.gora.oracle.store.OracleStore;
 
 import org.apache.commons.io.FileUtils;
-import java.io.File;
-import java.io.IOException;
+
+import java.io.*;
 import java.util.Properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Author: Apostolos Giannakidis
- * Date: 7/3/13
  * Driver to set up an embedded Oracle database instance for use in our
  * unit tests.
+ * @author Apostolos Giannakidis
  */
 public class GoraOracleTestDriver extends GoraTestDriver {
 
   private static Logger log = LoggerFactory.getLogger(GoraOracleTestDriver.class);
-  private static String storeName = "kvstore";
-  private static String serverHostName = "localhost";
-  private static String serverHostPort = "5000";
+  private static String storeName = "kvstore";  //the default kvstore name
+  private static String serverHostName = "localhost"; //the default hostname to connect to
+  private static String serverHostPort = "5000";  //the default port to connect to
 
   //milliseconds to sleep after the server process executes
-  private final long MILLISTOSLEEP = 8000;
+  private final long MILLISTOSLEEP = 11000;
 
   //number of times to retry to start the service, in case it fails to start
-  private final int TIMESTORETRY = 3;
+  private final int TIMESTORETRY = 4;
 
   private static KVStore kvstore;    // reference to the kvstore
 
-  Process proc;   // reference to the kvstore process
+  Process proc; // reference to the kvstore process
 
   /**
    * Constructor
@@ -47,8 +45,8 @@ public class GoraOracleTestDriver extends GoraTestDriver {
   public void setUpClass() throws Exception {
     super.setUpClass();
     log.info("Initializing Oracle NoSQL driver.");
-    initOracleNoSQLSever();
-    createKVStore();
+    initOracleNoSQLSever(); // start the Oracle NoSQL server
+    createKVStore();  //connect to the Oracle NoSQL server
   }
 
   @Override
@@ -81,13 +79,17 @@ public class GoraOracleTestDriver extends GoraTestDriver {
     /* Spawn a new process in order to start the Oracle NoSQL service. */
     proc = Runtime.getRuntime().exec(new String[]{"java","-jar","lib-ext/kv-2.0.39/kvstore.jar", "kvlite"});
 
+    InputStream stdin = proc.getInputStream();
+    InputStreamReader isr = new InputStreamReader(stdin);
+    BufferedReader br = new BufferedReader(isr);
+
     try {
-      Thread.sleep(MILLISTOSLEEP); // sleep for MILLISTOSLEEP in order for the service to be started.
+      Thread.sleep(MILLISTOSLEEP);
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
 
-    if (proc == null)
+    if ( (proc == null) )
       log.info("Server not started");
     else
       log.info("Server started");
@@ -98,7 +100,7 @@ public class GoraOracleTestDriver extends GoraTestDriver {
 
   /**
    * Creates the Oracle NoSQL store and returns a specific object
-   * @return
+   * @return the kvstore handle
    * @throws IOException
    */
   private KVStore createKVStore() throws IOException {
@@ -134,6 +136,11 @@ public class GoraOracleTestDriver extends GoraTestDriver {
     if (kvstore == null){
       log.error("KVStore was not opened.");
       log.error("Terminated because Oracle NoSQL service cannot be started.");
+      try {
+        tearDownClass();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
       System.exit(-1);
     }
     else
@@ -143,11 +150,20 @@ public class GoraOracleTestDriver extends GoraTestDriver {
     return kvstore;
   }
 
+  /**
+   * Setter for Properties. Required by the Gora API.
+   * @param properties  the properties object to be set
+   */
   @Override
   protected void setProperties(Properties properties) {
     super.setProperties(properties);
   }
 
+  /**
+   * Helper method to get the serialised value directly from the database
+   * @param myKey the key of the key/value pair
+   * @return the fetched, serialised value
+   */
   public byte[] get(Key myKey){
     ValueVersion vv = null;
 
@@ -161,6 +177,10 @@ public class GoraOracleTestDriver extends GoraTestDriver {
       return null;
   }
 
+  /**
+   * Helper method to get the kvstore handle
+   * @return the kvstore handle
+   */
   public KVStore getKvstore(){
     return kvstore;
   }

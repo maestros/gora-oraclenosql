@@ -1,7 +1,7 @@
 package org.apache.gora.oracle.store;
 
 /**
- * Author: Apostolos Giannakidis
+ * @author Apostolos Giannakidis
  */
 public class OracleStoreConstants {
 
@@ -11,7 +11,7 @@ public class OracleStoreConstants {
   public static final String DEFAULT_MAPPING_FILE = "gora-oracle-mapping.xml";
 
   /**
-   *
+   * The names of the properties in the gora.properties file.
    */
   public static final String DURABILITY_SYNCPOLICY = "durability.syncpolicy";
   public static final String DURABILITY_REPLICAACKPOLICY = "durability.replicaackpolicy";
