@@ -1,0 +1,13 @@
+Index: DynamoDBStore.java
+===================================================================
+--- DynamoDBStore.java	(revision 1497959)
++++ DynamoDBStore.java	(working copy)
+@@ -211,7 +211,7 @@
+     
+         String tableName = tableElement.getAttributeValue("name");
+         long readCapacUnits = Long.parseLong(tableElement.getAttributeValue("readcunit"));
+-        long writeCapacUnits = Long.parseLong(tableElement.getAttributeValue("readcunit"));
++        long writeCapacUnits = Long.parseLong(tableElement.getAttributeValue("writecunit"));
+     
+         mappingBuilder.setTableName(tableName);
+         mappingBuilder.setProvisionedThroughput(tableName, readCapacUnits, writeCapacUnits);

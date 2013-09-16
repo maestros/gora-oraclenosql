@@ -1,0 +1,38 @@
+diff --git gora-core/src/main/java/org/apache/gora/store/DataStoreFactory.java gora-core/src/main/java/org/apache/gora/store/DataStoreFactory.java
+index 5a16329..25679f8 100644
+--- gora-core/src/main/java/org/apache/gora/store/DataStoreFactory.java
++++ gora-core/src/main/java/org/apache/gora/store/DataStoreFactory.java
+@@ -363,8 +363,16 @@ public class DataStoreFactory{
+   }
+ 
+   public static String getMappingFile(Properties properties, DataStore<?,?> store
+-      , String defaultValue) {
+-    return findProperty(properties, store, MAPPING_FILE, defaultValue);
++      , String defaultValue) throws IOException {
++
++    String mappingFilename = findProperty(properties, store, MAPPING_FILE, defaultValue);
++
++    InputStream mappingFile = store.getClass().getClassLoader().getResourceAsStream(mappingFilename);
++
++    if (mappingFile == null)
++      throw new IOException("Unable to open mapping file: "+mappingFilename);
++
++    return mappingFilename;
+   }
+ 
+   private static String getDefaultDataStore(Properties properties) {
+diff --git gora-solr/src/main/java/org/apache/gora/solr/store/SolrStore.java gora-solr/src/main/java/org/apache/gora/solr/store/SolrStore.java
+index 8103529..88bd653 100644
+--- gora-solr/src/main/java/org/apache/gora/solr/store/SolrStore.java
++++ gora-solr/src/main/java/org/apache/gora/solr/store/SolrStore.java
+@@ -95,8 +95,9 @@ public class SolrStore<K, T extends PersistentBase> extends DataStoreBase<K, T>
+   @Override
+   public void initialize( Class<K> keyClass, Class<T> persistentClass, Properties properties ) {
+     super.initialize( keyClass, persistentClass, properties );
+-    String mappingFile = DataStoreFactory.getMappingFile( properties, this, DEFAULT_MAPPING_FILE );
++
+     try {
++      String mappingFile = DataStoreFactory.getMappingFile( properties, this, DEFAULT_MAPPING_FILE );
+       mapping = readMapping( mappingFile );
+     }
+     catch ( IOException e ) {

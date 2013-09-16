@@ -1,0 +1,110 @@
+diff --git gora-cassandra/src/test/java/org/apache/gora/cassandra/store/TestCassandraStore.java gora-cassandra/src/test/java/org/apache/gora/cassandra/store/TestCassandraStore.java
+index 7620aab..e80dff4 100644
+--- gora-cassandra/src/test/java/org/apache/gora/cassandra/store/TestCassandraStore.java
++++ gora-cassandra/src/test/java/org/apache/gora/cassandra/store/TestCassandraStore.java
+@@ -68,8 +68,7 @@ public class TestCassandraStore extends DataStoreTestBase{
+   }
+ 
+ 
+-// ============================================================================
+-    //We need to skip the following tests for a while until we fix some issues..
++  //We need to skip the following tests for a while until we fix some issues..
+ 
+   @Ignore("skipped until some bugs are fixed")
+   @Override
+@@ -113,15 +112,5 @@ public class TestCassandraStore extends DataStoreTestBase{
+   @Ignore("skipped until some bugs are fixed")
+   @Override
+   public void testGet3UnionField() throws IOException {}
+-// ============================================================================
+ 
+-
+-  public static void main(String[] args) throws Exception {
+-    TestCassandraStore test = new TestCassandraStore();
+-    setUpClass();
+-    test.setUp();
+-
+-    test.tearDown();
+-    tearDownClass();
+-  }
+ }
+diff --git gora-dynamodb/src/test/java/org/apache/gora/dynamodb/TestDynamoDBStore.java gora-dynamodb/src/test/java/org/apache/gora/dynamodb/TestDynamoDBStore.java
+index 27cccda..4c08428 100644
+--- gora-dynamodb/src/test/java/org/apache/gora/dynamodb/TestDynamoDBStore.java
++++ gora-dynamodb/src/test/java/org/apache/gora/dynamodb/TestDynamoDBStore.java
+@@ -383,25 +383,4 @@ public class TestDynamoDBStore extends WSDataStoreTestBase<DynamoDBKey, person>
+       log.info("\t" + place);
+   }
+ 
+-  public static void main(String[] args) throws Exception {
+-    TestDynamoDBStore test = new TestDynamoDBStore();
+-    try{
+-      test.setPersistentKeyClass(DynamoDBKey.class);
+-      test.setPersistentValClass(person.class);
+-      TestDynamoDBStore.setUpClass();
+-      test.setUp();
+-      test.testPut();
+-      /*test.testGet();
+-      test.testQuery();
+-      test.testUpdate();
+-      test.testQueryKeyRange();
+-      test.testDelete();
+-      test.testDeleteByQuery(); */
+-    }catch (Exception e){
+-      log.error("Error while executing tests.");
+-    }finally{
+-      test.tearDown();
+-      TestDynamoDBStore.tearDownClass();
+-    }
+-  }
+ }
+diff --git gora-hbase/src/test/java/org/apache/gora/hbase/mapreduce/TestHBaseStoreCountQuery.java gora-hbase/src/test/java/org/apache/gora/hbase/mapreduce/TestHBaseStoreCountQuery.java
+index 503e46c..0c92f16 100644
+--- gora-hbase/src/test/java/org/apache/gora/hbase/mapreduce/TestHBaseStoreCountQuery.java
++++ gora-hbase/src/test/java/org/apache/gora/hbase/mapreduce/TestHBaseStoreCountQuery.java
+@@ -53,10 +53,4 @@ public class TestHBaseStoreCountQuery {
+   public void testCountQuery() throws Exception {
+     MapReduceTestUtils.testCountQuery(webPageStore, cluster.getConf());
+   }
+-
+-  public static void main(String[] args) throws Exception {
+-   TestHBaseStoreCountQuery test =  new TestHBaseStoreCountQuery();
+-   test.setUp();
+-   test.testCountQuery();
+-  }
+ }
+diff --git gora-hbase/src/test/java/org/apache/gora/hbase/mapreduce/TestHBaseStoreWordCount.java gora-hbase/src/test/java/org/apache/gora/hbase/mapreduce/TestHBaseStoreWordCount.java
+index 720d3f5..b42b0c0 100644
+--- gora-hbase/src/test/java/org/apache/gora/hbase/mapreduce/TestHBaseStoreWordCount.java
++++ gora-hbase/src/test/java/org/apache/gora/hbase/mapreduce/TestHBaseStoreWordCount.java
+@@ -57,10 +57,5 @@ public class TestHBaseStoreWordCount {
+   public void testWordCount() throws Exception {
+     MapReduceTestUtils.testWordCount(cluster.getConf(), webPageStore, tokenStore);
+   }
+-  
+-  public static void main(String[] args) throws Exception {
+-   TestHBaseStoreWordCount test =  new TestHBaseStoreWordCount();
+-   test.setUp();
+-   test.testWordCount();
+-  }
++
+ }
+diff --git gora-hbase/src/test/java/org/apache/gora/hbase/store/TestHBaseStore.java gora-hbase/src/test/java/org/apache/gora/hbase/store/TestHBaseStore.java
+index dc080de..b4835ac 100644
+--- gora-hbase/src/test/java/org/apache/gora/hbase/store/TestHBaseStore.java
++++ gora-hbase/src/test/java/org/apache/gora/hbase/store/TestHBaseStore.java
+@@ -243,14 +243,4 @@ public class TestHBaseStore extends DataStoreTestBase {
+    //TODO: We should raise an issue for HBase to allow us to specify if the endRow will be inclussive or exclusive.
+   }
+ 
+-  public static void main(String[] args) throws Exception {
+-    TestHBaseStore test = new TestHBaseStore();
+-    setUpClass();
+-    test.setUp();
+-
+-    test.testQuery();
+-
+-    test.tearDown();
+-    tearDownClass();
+-  }
+ }

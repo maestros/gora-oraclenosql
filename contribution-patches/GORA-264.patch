@@ -1,0 +1,1036 @@
+Index: gora-core/src/examples/java/org/apache/gora/examples/generated/WebPage.java
+===================================================================
+--- gora-core/src/examples/java/org/apache/gora/examples/generated/WebPage.java	(revision 1515228)
++++ gora-core/src/examples/java/org/apache/gora/examples/generated/WebPage.java	(working copy)
+@@ -38,10 +38,17 @@
+ import org.apache.gora.persistency.impl.StateManagerImpl;
+ import org.apache.gora.persistency.StatefulHashMap;
+ import org.apache.gora.persistency.ListGenericArray;
+-
+ @SuppressWarnings("all")
+ public class WebPage extends PersistentBase {
++  
++  /**
++   * Variable holding the data bean schema.
++   */
+   public static final Schema _SCHEMA = Schema.parse("{\"type\":\"record\",\"name\":\"WebPage\",\"namespace\":\"org.apache.gora.examples.generated\",\"fields\":[{\"name\":\"url\",\"type\":\"string\"},{\"name\":\"content\",\"type\":[\"null\",\"bytes\"]},{\"name\":\"parsedContent\",\"type\":{\"type\":\"array\",\"items\":\"string\"}},{\"name\":\"outlinks\",\"type\":{\"type\":\"map\",\"values\":\"string\"}},{\"name\":\"metadata\",\"type\":{\"type\":\"record\",\"name\":\"Metadata\",\"fields\":[{\"name\":\"version\",\"type\":\"int\"},{\"name\":\"data\",\"type\":{\"type\":\"map\",\"values\":\"string\"}}]}}]}");
++  
++  /**
++   * Enum containing all data bean's fields.
++   */
+   public static enum Field {
+     URL(0,"url"),
+     CONTENT(1,"content"),
+@@ -49,13 +56,46 @@
+     OUTLINKS(3,"outlinks"),
+     METADATA(4,"metadata"),
+     ;
++    
++    /**
++     * Field's index.
++     */
+     private int index;
++    
++    /**
++     * Field's name.
++     */
+     private String name;
++    
++    /**
++     * Field's constructor
++     * @param index field's index.
++     * @param name field's name.
++     */
+     Field(int index, String name) {this.index=index;this.name=name;}
++    
++    /**
++     * Gets field's index.
++     * @return int field's index.
++     */
+     public int getIndex() {return index;}
++    
++    /**
++     * Gets field's name.
++     * @return String field's name.
++     */
+     public String getName() {return name;}
++    
++    /**
++     * Gets field's attributes to string.
++     * @return String field's attributes to string.
++     */
+     public String toString() {return name;}
+   };
++    
++    /**
++     * Contains all field's names.
++     */
+   public static final String[] _ALL_FIELDS = {"url","content","parsedContent","outlinks","metadata",};
+   static {
+     PersistentBase.registerFields(WebPage.class, _ALL_FIELDS);
+@@ -65,18 +105,44 @@
+   private GenericArray<Utf8> parsedContent;
+   private Map<Utf8,Utf8> outlinks;
+   private Metadata metadata;
++  
++  /**
++   * Default Constructor
++   */
+   public WebPage() {
+     this(new StateManagerImpl());
+   }
++  
++  /**
++   * Constructor
++   * @param stateManager for the data bean.
++   */
+   public WebPage(StateManager stateManager) {
+     super(stateManager);
+     parsedContent = new ListGenericArray<Utf8>(getSchema().getField("parsedContent").schema());
+     outlinks = new StatefulHashMap<Utf8,Utf8>();
+   }
++  
++  /**
++   * Returns a new instance by using a state manager.
++   * @param stateManager for the data bean.
++   * @return WebPage created.
++   */
+   public WebPage newInstance(StateManager stateManager) {
+     return new WebPage(stateManager);
+   }
++  
++  /**
++   * Returns the schema of the data bean.
++   * @return Schema for the data bean.
++   */
+   public Schema getSchema() { return _SCHEMA; }
++  
++  /**
++   * Gets a specific field.
++   * @param field index of a field for the data bean.
++   * @return Object representing a data bean's field.
++   */
+   public Object get(int _field) {
+     switch (_field) {
+     case 0: return url;
+@@ -87,6 +153,12 @@
+     default: throw new AvroRuntimeException("Bad index");
+     }
+   }
++  
++  /**
++   * Puts a value for a specific field.
++   * @param field index of a field for the data bean.
++   * @param value value of a field for the data bean.
++   */
+   @SuppressWarnings(value="unchecked")
+   public void put(int _field, Object _value) {
+     if(isFieldEqual(_field, _value)) return;
+@@ -100,44 +172,105 @@
+     default: throw new AvroRuntimeException("Bad index");
+     }
+   }
++  
++  /**
++   * Gets the Url.
++   * @return Utf8 representing WebPage Url.
++   */
+   public Utf8 getUrl() {
+     return (Utf8) get(0);
+   }
++  
++  /**
++   * Sets the Url.
++   * @param value containing WebPage Url.
++   */
+   public void setUrl(Utf8 value) {
+     put(0, value);
+   }
++  
++  /**
++   * Gets Content.
++   * @return the ByteBuffer value.
++   */
+   public ByteBuffer getContent() {
+     return (ByteBuffer) get(1);
+   }
++  
++  /**
++   * Sets the Content.
++   * @param the Content value to be set.
++   */
+   public void setContent(ByteBuffer value) {
+     put(1, value);
+   }
++  
++  /**
++   * Gets the ParsedContent array.
++   * @return GenericArray<Utf8> containing Utf8 elements.
++   */
+   public GenericArray<Utf8> getParsedContent() {
+     return (GenericArray<Utf8>) get(2);
+   }
++  
++  /**
++   * Adds a Utf8 element into the array.
++   * @param the Utf8 element to be added.
++   */
+   public void addToParsedContent(Utf8 element) {
+     getStateManager().setDirty(this, 2);
+     parsedContent.add(element);
+   }
++  
++  /**
++   * Gets Outlinks.
++   * @return Map containing Outlinks value.
++   */
+   public Map<Utf8, Utf8> getOutlinks() {
+     return (Map<Utf8, Utf8>) get(3);
+   }
++  
++  /**
++   * Gets the Outlinks's value using a key.
++   * @param key gets a specific Outlinks using a WebPageID.
++   * @return Utf8 containing Outlinks value.
++   */
+   public Utf8 getFromOutlinks(Utf8 key) {
+     if (outlinks == null) { return null; }
+     return outlinks.get(key);
+   }
++  
++  /**
++   * Adds a Outlinks into a WebPage.
++   * @param Map containing Outlinks value.
++   */
+   public void putToOutlinks(Utf8 key, Utf8 value) {
+     getStateManager().setDirty(this, 3);
+     outlinks.put(key, value);
+   }
++  
++  /**
++   * Removes Outlinks from a WebPage.
++   * @return key WebPage ID to be removed.
++   */
+   public Utf8 removeFromOutlinks(Utf8 key) {
+     if (outlinks == null) { return null; }
+     getStateManager().setDirty(this, 3);
+     return outlinks.remove(key);
+   }
++  
++  /**
++   * Gets the Metadata.
++   * @return Metadata representing WebPage Metadata.
++   */
+   public Metadata getMetadata() {
+     return (Metadata) get(4);
+   }
++  
++  /**
++   * Sets the Metadata.
++   * @param value containing WebPage Metadata.
++   */
+   public void setMetadata(Metadata value) {
+     put(4, value);
+   }
+Index: gora-core/src/examples/java/org/apache/gora/examples/generated/TokenDatum.java
+===================================================================
+--- gora-core/src/examples/java/org/apache/gora/examples/generated/TokenDatum.java	(revision 1515228)
++++ gora-core/src/examples/java/org/apache/gora/examples/generated/TokenDatum.java	(working copy)
+@@ -38,41 +38,113 @@
+ import org.apache.gora.persistency.impl.StateManagerImpl;
+ import org.apache.gora.persistency.StatefulHashMap;
+ import org.apache.gora.persistency.ListGenericArray;
+-
+ @SuppressWarnings("all")
+ public class TokenDatum extends PersistentBase {
++  
++  /**
++   * Variable holding the data bean schema.
++   */
+   public static final Schema _SCHEMA = Schema.parse("{\"type\":\"record\",\"name\":\"TokenDatum\",\"namespace\":\"org.apache.gora.examples.generated\",\"fields\":[{\"name\":\"count\",\"type\":\"int\"}]}");
++  
++  /**
++   * Enum containing all data bean's fields.
++   */
+   public static enum Field {
+     COUNT(0,"count"),
+     ;
++    
++    /**
++     * Field's index.
++     */
+     private int index;
++    
++    /**
++     * Field's name.
++     */
+     private String name;
++    
++    /**
++     * Field's constructor
++     * @param index field's index.
++     * @param name field's name.
++     */
+     Field(int index, String name) {this.index=index;this.name=name;}
++    
++    /**
++     * Gets field's index.
++     * @return int field's index.
++     */
+     public int getIndex() {return index;}
++    
++    /**
++     * Gets field's name.
++     * @return String field's name.
++     */
+     public String getName() {return name;}
++    
++    /**
++     * Gets field's attributes to string.
++     * @return String field's attributes to string.
++     */
+     public String toString() {return name;}
+   };
++    
++    /**
++     * Contains all field's names.
++     */
+   public static final String[] _ALL_FIELDS = {"count",};
+   static {
+     PersistentBase.registerFields(TokenDatum.class, _ALL_FIELDS);
+   }
+   private int count;
++  
++  /**
++   * Default Constructor
++   */
+   public TokenDatum() {
+     this(new StateManagerImpl());
+   }
++  
++  /**
++   * Constructor
++   * @param stateManager for the data bean.
++   */
+   public TokenDatum(StateManager stateManager) {
+     super(stateManager);
+   }
++  
++  /**
++   * Returns a new instance by using a state manager.
++   * @param stateManager for the data bean.
++   * @return TokenDatum created.
++   */
+   public TokenDatum newInstance(StateManager stateManager) {
+     return new TokenDatum(stateManager);
+   }
++  
++  /**
++   * Returns the schema of the data bean.
++   * @return Schema for the data bean.
++   */
+   public Schema getSchema() { return _SCHEMA; }
++  
++  /**
++   * Gets a specific field.
++   * @param field index of a field for the data bean.
++   * @return Object representing a data bean's field.
++   */
+   public Object get(int _field) {
+     switch (_field) {
+     case 0: return count;
+     default: throw new AvroRuntimeException("Bad index");
+     }
+   }
++  
++  /**
++   * Puts a value for a specific field.
++   * @param field index of a field for the data bean.
++   * @param value value of a field for the data bean.
++   */
+   @SuppressWarnings(value="unchecked")
+   public void put(int _field, Object _value) {
+     if(isFieldEqual(_field, _value)) return;
+@@ -82,9 +154,19 @@
+     default: throw new AvroRuntimeException("Bad index");
+     }
+   }
++  
++  /**
++   * Gets the Count.
++   * @return int representing TokenDatum Count.
++   */
+   public int getCount() {
+     return (Integer) get(0);
+   }
++  
++  /**
++   * Sets the Count.
++   * @param value containing TokenDatum Count.
++   */
+   public void setCount(int value) {
+     put(0, value);
+   }
+Index: gora-core/src/examples/java/org/apache/gora/examples/generated/Employee.java
+===================================================================
+--- gora-core/src/examples/java/org/apache/gora/examples/generated/Employee.java	(revision 1515228)
++++ gora-core/src/examples/java/org/apache/gora/examples/generated/Employee.java	(working copy)
+@@ -38,10 +38,17 @@
+ import org.apache.gora.persistency.impl.StateManagerImpl;
+ import org.apache.gora.persistency.StatefulHashMap;
+ import org.apache.gora.persistency.ListGenericArray;
+-
+ @SuppressWarnings("all")
+ public class Employee extends PersistentBase {
++  
++  /**
++   * Variable holding the data bean schema.
++   */
+   public static final Schema _SCHEMA = Schema.parse("{\"type\":\"record\",\"name\":\"Employee\",\"namespace\":\"org.apache.gora.examples.generated\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"dateOfBirth\",\"type\":\"long\"},{\"name\":\"ssn\",\"type\":\"string\"},{\"name\":\"salary\",\"type\":\"int\"},{\"name\":\"boss\",\"type\":[\"null\",\"Employee\",\"string\"]},{\"name\":\"webpage\",\"type\":[\"null\",{\"type\":\"record\",\"name\":\"WebPage\",\"fields\":[{\"name\":\"url\",\"type\":\"string\"},{\"name\":\"content\",\"type\":[\"null\",\"bytes\"]},{\"name\":\"parsedContent\",\"type\":{\"type\":\"array\",\"items\":\"string\"}},{\"name\":\"outlinks\",\"type\":{\"type\":\"map\",\"values\":\"string\"}},{\"name\":\"metadata\",\"type\":{\"type\":\"record\",\"name\":\"Metadata\",\"fields\":[{\"name\":\"version\",\"type\":\"int\"},{\"name\":\"data\",\"type\":{\"type\":\"map\",\"values\":\"string\"}}]}}]}]}]}");
++  
++  /**
++   * Enum containing all data bean's fields.
++   */
+   public static enum Field {
+     NAME(0,"name"),
+     DATE_OF_BIRTH(1,"dateOfBirth"),
+@@ -50,13 +57,46 @@
+     BOSS(4,"boss"),
+     WEBPAGE(5,"webpage"),
+     ;
++    
++    /**
++     * Field's index.
++     */
+     private int index;
++    
++    /**
++     * Field's name.
++     */
+     private String name;
++    
++    /**
++     * Field's constructor
++     * @param index field's index.
++     * @param name field's name.
++     */
+     Field(int index, String name) {this.index=index;this.name=name;}
++    
++    /**
++     * Gets field's index.
++     * @return int field's index.
++     */
+     public int getIndex() {return index;}
++    
++    /**
++     * Gets field's name.
++     * @return String field's name.
++     */
+     public String getName() {return name;}
++    
++    /**
++     * Gets field's attributes to string.
++     * @return String field's attributes to string.
++     */
+     public String toString() {return name;}
+   };
++    
++    /**
++     * Contains all field's names.
++     */
+   public static final String[] _ALL_FIELDS = {"name","dateOfBirth","ssn","salary","boss","webpage",};
+   static {
+     PersistentBase.registerFields(Employee.class, _ALL_FIELDS);
+@@ -67,16 +107,42 @@
+   private int salary;
+   private Object boss;
+   private WebPage webpage;
++  
++  /**
++   * Default Constructor
++   */
+   public Employee() {
+     this(new StateManagerImpl());
+   }
++  
++  /**
++   * Constructor
++   * @param stateManager for the data bean.
++   */
+   public Employee(StateManager stateManager) {
+     super(stateManager);
+   }
++  
++  /**
++   * Returns a new instance by using a state manager.
++   * @param stateManager for the data bean.
++   * @return Employee created.
++   */
+   public Employee newInstance(StateManager stateManager) {
+     return new Employee(stateManager);
+   }
++  
++  /**
++   * Returns the schema of the data bean.
++   * @return Schema for the data bean.
++   */
+   public Schema getSchema() { return _SCHEMA; }
++  
++  /**
++   * Gets a specific field.
++   * @param field index of a field for the data bean.
++   * @return Object representing a data bean's field.
++   */
+   public Object get(int _field) {
+     switch (_field) {
+     case 0: return name;
+@@ -88,6 +154,12 @@
+     default: throw new AvroRuntimeException("Bad index");
+     }
+   }
++  
++  /**
++   * Puts a value for a specific field.
++   * @param field index of a field for the data bean.
++   * @param value value of a field for the data bean.
++   */
+   @SuppressWarnings(value="unchecked")
+   public void put(int _field, Object _value) {
+     if(isFieldEqual(_field, _value)) return;
+@@ -102,42 +174,107 @@
+     default: throw new AvroRuntimeException("Bad index");
+     }
+   }
++  
++  /**
++   * Gets the Name.
++   * @return Utf8 representing Employee Name.
++   */
+   public Utf8 getName() {
+     return (Utf8) get(0);
+   }
++  
++  /**
++   * Sets the Name.
++   * @param value containing Employee Name.
++   */
+   public void setName(Utf8 value) {
+     put(0, value);
+   }
++  
++  /**
++   * Gets the DateOfBirth.
++   * @return long representing Employee DateOfBirth.
++   */
+   public long getDateOfBirth() {
+     return (Long) get(1);
+   }
++  
++  /**
++   * Sets the DateOfBirth.
++   * @param value containing Employee DateOfBirth.
++   */
+   public void setDateOfBirth(long value) {
+     put(1, value);
+   }
++  
++  /**
++   * Gets the Ssn.
++   * @return Utf8 representing Employee Ssn.
++   */
+   public Utf8 getSsn() {
+     return (Utf8) get(2);
+   }
++  
++  /**
++   * Sets the Ssn.
++   * @param value containing Employee Ssn.
++   */
+   public void setSsn(Utf8 value) {
+     put(2, value);
+   }
++  
++  /**
++   * Gets the Salary.
++   * @return int representing Employee Salary.
++   */
+   public int getSalary() {
+     return (Integer) get(3);
+   }
++  
++  /**
++   * Sets the Salary.
++   * @param value containing Employee Salary.
++   */
+   public void setSalary(int value) {
+     put(3, value);
+   }
++  
++  /**
++   * Gets Boss.
++   * @return the Object value.
++   */
+   public Object getBoss() {
+     return (Object) get(4);
+   }
++  
++  /**
++   * Sets the Boss.
++   * @param the Boss value to be set.
++   */
+   public void setBoss(Employee value) {
+     put(4, value);
+   }
++  
++  /**
++   * Sets the Boss.
++   * @param the Boss value to be set.
++   */
+   public void setBoss(Utf8 value) {
+     put(4, value);
+   }
++  
++  /**
++   * Gets Webpage.
++   * @return the WebPage value.
++   */
+   public WebPage getWebpage() {
+     return (WebPage) get(5);
+   }
++  
++  /**
++   * Sets the Webpage.
++   * @param the Webpage value to be set.
++   */
+   public void setWebpage(WebPage value) {
+     put(5, value);
+   }
+Index: gora-core/src/examples/java/org/apache/gora/examples/generated/Metadata.java
+===================================================================
+--- gora-core/src/examples/java/org/apache/gora/examples/generated/Metadata.java	(revision 1515228)
++++ gora-core/src/examples/java/org/apache/gora/examples/generated/Metadata.java	(working copy)
+@@ -38,38 +38,104 @@
+ import org.apache.gora.persistency.impl.StateManagerImpl;
+ import org.apache.gora.persistency.StatefulHashMap;
+ import org.apache.gora.persistency.ListGenericArray;
+-
+ @SuppressWarnings("all")
+ public class Metadata extends PersistentBase {
++  
++  /**
++   * Variable holding the data bean schema.
++   */
+   public static final Schema _SCHEMA = Schema.parse("{\"type\":\"record\",\"name\":\"Metadata\",\"namespace\":\"org.apache.gora.examples.generated\",\"fields\":[{\"name\":\"version\",\"type\":\"int\"},{\"name\":\"data\",\"type\":{\"type\":\"map\",\"values\":\"string\"}}]}");
++  
++  /**
++   * Enum containing all data bean's fields.
++   */
+   public static enum Field {
+     VERSION(0,"version"),
+     DATA(1,"data"),
+     ;
++    
++    /**
++     * Field's index.
++     */
+     private int index;
++    
++    /**
++     * Field's name.
++     */
+     private String name;
++    
++    /**
++     * Field's constructor
++     * @param index field's index.
++     * @param name field's name.
++     */
+     Field(int index, String name) {this.index=index;this.name=name;}
++    
++    /**
++     * Gets field's index.
++     * @return int field's index.
++     */
+     public int getIndex() {return index;}
++    
++    /**
++     * Gets field's name.
++     * @return String field's name.
++     */
+     public String getName() {return name;}
++    
++    /**
++     * Gets field's attributes to string.
++     * @return String field's attributes to string.
++     */
+     public String toString() {return name;}
+   };
++    
++    /**
++     * Contains all field's names.
++     */
+   public static final String[] _ALL_FIELDS = {"version","data",};
+   static {
+     PersistentBase.registerFields(Metadata.class, _ALL_FIELDS);
+   }
+   private int version;
+   private Map<Utf8,Utf8> data;
++  
++  /**
++   * Default Constructor
++   */
+   public Metadata() {
+     this(new StateManagerImpl());
+   }
++  
++  /**
++   * Constructor
++   * @param stateManager for the data bean.
++   */
+   public Metadata(StateManager stateManager) {
+     super(stateManager);
+     data = new StatefulHashMap<Utf8,Utf8>();
+   }
++  
++  /**
++   * Returns a new instance by using a state manager.
++   * @param stateManager for the data bean.
++   * @return Metadata created.
++   */
+   public Metadata newInstance(StateManager stateManager) {
+     return new Metadata(stateManager);
+   }
++  
++  /**
++   * Returns the schema of the data bean.
++   * @return Schema for the data bean.
++   */
+   public Schema getSchema() { return _SCHEMA; }
++  
++  /**
++   * Gets a specific field.
++   * @param field index of a field for the data bean.
++   * @return Object representing a data bean's field.
++   */
+   public Object get(int _field) {
+     switch (_field) {
+     case 0: return version;
+@@ -77,6 +143,12 @@
+     default: throw new AvroRuntimeException("Bad index");
+     }
+   }
++  
++  /**
++   * Puts a value for a specific field.
++   * @param field index of a field for the data bean.
++   * @param value value of a field for the data bean.
++   */
+   @SuppressWarnings(value="unchecked")
+   public void put(int _field, Object _value) {
+     if(isFieldEqual(_field, _value)) return;
+@@ -87,23 +159,54 @@
+     default: throw new AvroRuntimeException("Bad index");
+     }
+   }
++  
++  /**
++   * Gets the Version.
++   * @return int representing Metadata Version.
++   */
+   public int getVersion() {
+     return (Integer) get(0);
+   }
++  
++  /**
++   * Sets the Version.
++   * @param value containing Metadata Version.
++   */
+   public void setVersion(int value) {
+     put(0, value);
+   }
++  
++  /**
++   * Gets Data.
++   * @return Map containing Data value.
++   */
+   public Map<Utf8, Utf8> getData() {
+     return (Map<Utf8, Utf8>) get(1);
+   }
++  
++  /**
++   * Gets the Data's value using a key.
++   * @param key gets a specific Data using a MetadataID.
++   * @return Utf8 containing Data value.
++   */
+   public Utf8 getFromData(Utf8 key) {
+     if (data == null) { return null; }
+     return data.get(key);
+   }
++  
++  /**
++   * Adds a Data into a Metadata.
++   * @param Map containing Data value.
++   */
+   public void putToData(Utf8 key, Utf8 value) {
+     getStateManager().setDirty(this, 1);
+     data.put(key, value);
+   }
++  
++  /**
++   * Removes Data from a Metadata.
++   * @return key Metadata ID to be removed.
++   */
+   public Utf8 removeFromData(Utf8 key) {
+     if (data == null) { return null; }
+     getStateManager().setDirty(this, 1);
+Index: gora-core/src/main/java/org/apache/gora/compiler/GoraCompiler.java
+===================================================================
+--- gora-core/src/main/java/org/apache/gora/compiler/GoraCompiler.java	(revision 1515228)
++++ gora-core/src/main/java/org/apache/gora/compiler/GoraCompiler.java	(working copy)
+@@ -217,8 +217,6 @@
+           ? (s.getNamespace() != null)
+           : !namespace.equals(s.getNamespace()))
+         line(0, "import "+SpecificData.get().getClassName(s)+";");
+-    line(0, "");
+-    line(0, "@SuppressWarnings(\"all\")");
+   }
+ 
+   private String params(Schema request) throws IOException {
+@@ -234,6 +232,36 @@
+     return b.toString();
+   }
+ 
++  /**
++   * Method that adds javadoc to the generated data beans.
++   * @param indent  Specifies the indentation for the javadoc
++   * @param javadoc The javadoc to be added. Use \n to span the javadoc
++   *                to multiple lines.
++   * @throws IOException
++   */
++  private void addJavaDoc(int indent, String javadoc) throws IOException {
++
++    if (javadoc==null)
++      return;
++
++    if (indent<0)
++      return;
++
++    line(indent, "");
++    line(indent, "/**");
++
++    if (javadoc.contains("\n")){
++      String javadocLines[] = javadoc.split("\n");
++
++      for(String line : javadocLines)
++        line(indent, " * "+line);
++    }
++    else
++      line(indent," * "+javadoc);
++
++    line(indent, " */");
++  }
++
+   private String errors(Schema errs) throws IOException {
+     StringBuilder b = new StringBuilder();
+     for (Schema error : errs.getTypes().subList(1, errs.getTypes().size())) {
+@@ -248,28 +276,51 @@
+     try {
+       switch (schema.getType()) {
+       case RECORD:
++        addJavaDoc(0,schema.getDoc());
++        line(0, "@SuppressWarnings(\"all\")");
+         String type = type(schema);
+         line(0, "public class "+ type
+              +" extends PersistentBase {");
++
+         // schema definition
++        addJavaDoc(1,"Variable holding the data bean schema.");
+         line(1, "public static final Schema _SCHEMA = Schema.parse(\""
+              +esc(schema)+"\");");
+ 
+         //field information
++        addJavaDoc(1,"Enum containing all data bean's fields.");
+         line(1, "public static enum Field {");
+         int i=0;
+         for (Field field : schema.getFields()) {
+           line(2,toUpperCase(field.name())+"("+(i++)+ ",\"" + field.name() + "\"),");
+         }
+         line(2, ";");
++
++        addJavaDoc(2,"Field's index.");
+         line(2, "private int index;");
++
++        addJavaDoc(2,"Field's name.");
+         line(2, "private String name;");
++
++        addJavaDoc(2,"Field's constructor\n"+
++                     "@param index field's index.\n"+
++                     "@param name field's name.");
+         line(2, "Field(int index, String name) {this.index=index;this.name=name;}");
++
++        addJavaDoc(2,"Gets field's index.\n"+
++                     "@return int field's index.");
+         line(2, "public int getIndex() {return index;}");
++
++        addJavaDoc(2,"Gets field's name.\n"+
++                "@return String field's name.");
+         line(2, "public String getName() {return name;}");
++
++        addJavaDoc(2,"Gets field's attributes to string.\n"+
++                "@return String field's attributes to string.");
+         line(2, "public String toString() {return name;}");
+         line(1, "};");
+ 
++        addJavaDoc(2,"Contains all field's names.");
+         StringBuilder builder = new StringBuilder(
+         "public static final String[] _ALL_FIELDS = {");
+         for (Field field : schema.getFields()) {
+@@ -284,13 +335,17 @@
+ 
+         // field declations
+         for (Field field : schema.getFields()) {
++          addJavaDoc(1,field.doc());
+           line(1,"private "+unbox(field.schema())+" "+field.name()+";");
+         }
+ 
+         //constructors
++        addJavaDoc(1,"Default Constructor");
+         line(1, "public " + type + "() {");
+         line(2, "this(new StateManagerImpl());");
+         line(1, "}");
++
++        addJavaDoc(1,"Constructor\n@param stateManager for the data bean.");
+         line(1, "public " + type + "(StateManager stateManager) {");
+         line(2, "super(stateManager);");
+         for (Field field : schema.getFields()) {
+@@ -309,13 +364,22 @@
+         line(1, "}");
+ 
+         //newInstance(StateManager)
++        addJavaDoc(1,"Returns a new instance by using a state manager.\n"+
++                     "@param stateManager for the data bean.\n"+
++                     "@return "+schema.getName()+" created.");
+         line(1, "public " + type + " newInstance(StateManager stateManager) {");
+         line(2, "return new " + type + "(stateManager);" );
+         line(1, "}");
+ 
+         // schema method
++        addJavaDoc(1,"Returns the schema of the data bean.\n"+
++                     "@return Schema for the data bean.");
+         line(1, "public Schema getSchema() { return _SCHEMA; }");
++
+         // get method
++        addJavaDoc(1,"Gets a specific field.\n"+
++                     "@param field index of a field for the data bean.\n"+
++                     "@return Object representing a data bean's field.");
+         line(1, "public Object get(int _field) {");
+         line(2, "switch (_field) {");
+         i = 0;
+@@ -325,7 +389,11 @@
+         line(2, "default: throw new AvroRuntimeException(\"Bad index\");");
+         line(2, "}");
+         line(1, "}");
++
+         // put method
++        addJavaDoc(1,"Puts a value for a specific field.\n"+
++                     "@param field index of a field for the data bean.\n"+
++                     "@param value value of a field for the data bean.");
+         line(1, "@SuppressWarnings(value=\"unchecked\")");
+         line(1, "public void put(int _field, Object _value) {");
+         line(2, "if(isFieldEqual(_field, _value)) return;");
+@@ -352,9 +420,14 @@
+           case FIXED:
+             String unboxed = unbox(fieldSchema);
+             String fieldType = type(fieldSchema);
++            addJavaDoc(1,"Gets the "+camelKey+".\n"+
++                         "@return "+unboxed+" representing "+schema.getName()+" "+camelKey+".");
+             line(1, "public "+unboxed+" get" +camelKey+"() {");
+             line(2, "return ("+fieldType+") get("+i+");");
+             line(1, "}");
++
++            addJavaDoc(1,"Sets the "+camelKey+".\n"+
++                         "@param value containing "+schema.getName()+" "+camelKey+".");
+             line(1, "public void set"+camelKey+"("+unboxed+" value) {");
+             line(2, "put("+i+", value);");
+             line(1, "}");
+@@ -362,9 +435,15 @@
+           case ARRAY:
+             unboxed = unbox(fieldSchema.getElementType());
+             fieldType = type(fieldSchema.getElementType());
++
++            addJavaDoc(1,"Gets the "+camelKey+" array.\n"+
++                    "@return GenericArray<"+fieldType+"> containing "+fieldType+" elements.");
+             line(1, "public GenericArray<"+fieldType+"> get"+camelKey+"() {");
+             line(2, "return (GenericArray<"+fieldType+">) get("+i+");");
+             line(1, "}");
++
++            addJavaDoc(1,"Adds a "+unboxed+" element into the array.\n"+
++                    "@param the "+unboxed+" element to be added.");
+             line(1, "public void addTo"+camelKey+"("+unboxed+" element) {");
+             line(2, "getStateManager().setDirty(this, "+i+");");
+             line(2, field.name()+".add(element);");
+@@ -373,17 +452,30 @@
+           case MAP:
+             unboxed = unbox(fieldSchema.getValueType());
+             fieldType = type(fieldSchema.getValueType());
++
++            addJavaDoc(1,"Gets "+camelKey+".\n"+
++                    "@return Map containing "+camelKey+" value.");
+             line(1, "public Map<Utf8, "+fieldType+"> get"+camelKey+"() {");
+             line(2, "return (Map<Utf8, "+fieldType+">) get("+i+");");
+             line(1, "}");
++
++            addJavaDoc(1,"Gets the "+camelKey+"'s value using a key.\n"+
++                    "@param key gets a specific "+camelKey+" using a "+schema.getName()+"ID.\n"+
++                    "@return "+fieldType+" containing "+camelKey+" value.");
+             line(1, "public "+fieldType+" getFrom"+camelKey+"(Utf8 key) {");
+             line(2, "if ("+field.name()+" == null) { return null; }");
+             line(2, "return "+field.name()+".get(key);");
+             line(1, "}");
++
++            addJavaDoc(1,"Adds a "+camelKey+" into a "+schema.getName()+".\n"+
++                    "@param Map containing "+camelKey+" value.");
+             line(1, "public void putTo"+camelKey+"(Utf8 key, "+unboxed+" value) {");
+             line(2, "getStateManager().setDirty(this, "+i+");");
+             line(2, field.name()+".put(key, value);");
+             line(1, "}");
++
++            addJavaDoc(1,"Removes "+camelKey+" from a "+schema.getName()+".\n"+
++                    "@return key "+schema.getName()+" ID to be removed.");
+             line(1, "public "+fieldType+" removeFrom"+camelKey+"(Utf8 key) {");
+             line(2, "if ("+field.name()+" == null) { return null; }");
+             line(2, "getStateManager().setDirty(this, "+i+");");
+@@ -392,7 +484,10 @@
+             break;
+           case UNION:
+             fieldType = type(fieldSchema);
++
+             //Create get method: public <unbox(field.schema())> get<camelKey>()
++            addJavaDoc(1,"Gets "+camelKey+".\n"+
++                    "@return the "+unbox(field.schema())+" value.");
+             line(1, "public "+unbox(field.schema())+" get" +camelKey+"() {");
+             line(2, "return ("+unbox(field.schema())+") get("+i+");");
+             line(1, "}");
+@@ -401,6 +496,9 @@
+             for (Schema s : fieldSchema.getTypes()) {
+               if (s.getType().equals(Schema.Type.NULL)) continue ;
+               String unionFieldType = type(s);
++
++              addJavaDoc(1,"Sets the "+camelKey+".\n"+
++                      "@param the "+camelKey+" value to be set.");
+               line(1, "public void set"+camelKey+"("+unionFieldType+" value) {");
+               line(2, "put("+i+", value);");
+               line(1, "}");
+Index: CHANGES.txt
+===================================================================
+--- CHANGES.txt	(revision 1515228)
++++ CHANGES.txt	(working copy)
+@@ -4,6 +4,8 @@
+ 
+ Gora Change Log
+ 
++* GORA-264 Make generated data beans more java doc friendly (Apostolos Giannakidis via lewismc)
++
+ * GORA-222 upgrade jackson version to 1.6.9 (rherget via lewismc)
+ 
+ * GORA-232 DataStoreTestBase should delegate all functionality to DataStoreTestUtil (Apostolos Giannakidis via lewismc)

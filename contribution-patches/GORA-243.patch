@@ -1,0 +1,21 @@
+Index: gora
+===================================================================
+--- gora	(revision 1493569)
++++ gora	(working copy)
+@@ -143,6 +143,8 @@
+   shift
+ fi
+ 
++SAVEIFS=$IFS
++IFS=$(echo -en "\n\b")
+ # add libs to CLASSPATH
+ for f in $GORA_HOME/$MODULE/lib/*.jar; do
+   CLASSPATH=${CLASSPATH}:$f;
+@@ -151,6 +153,7 @@
+ for f in $GORA_HOME/$MODULE/target/*.jar; do
+   CLASSPATH=${CLASSPATH}:$f;
+ done
++IFS=$SAVEIFS
+ 
+ CLASSPATH=${CLASSPATH}:$GORA_HOME/$MODULE/target/classes/
+ CLASSPATH=${CLASSPATH}:$GORA_HOME/$MODULE/target/test-classes/

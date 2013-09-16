@@ -1,0 +1,20 @@
+diff --git gora-core/pom.xml gora-core/pom.xml
+index 51fed91..fd2144d 100644
+--- gora-core/pom.xml
++++ gora-core/pom.xml
+@@ -83,6 +83,15 @@
+                         </goals>
+                     </execution>
+                 </executions>
++                <configuration>
++                    <archive>
++                        <manifest>
++                            <mainClass>org.apache.gora.compiler.GoraCompiler</mainClass>
++                            <addClasspath>true</addClasspath>
++                            <classpathPrefix>../lib/</classpathPrefix>
++                        </manifest>
++                    </archive>
++                </configuration>
+             </plugin>
+             <plugin>
+                 <groupId>org.codehaus.mojo</groupId>

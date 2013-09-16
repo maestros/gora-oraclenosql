@@ -1,0 +1,2764 @@
+Index: gora-accumulo/src/test/java/org/apache/gora/accumulo/store/AccumuloStoreTest.java
+===================================================================
+--- gora-accumulo/src/test/java/org/apache/gora/accumulo/store/AccumuloStoreTest.java	(revision 1497959)
++++ gora-accumulo/src/test/java/org/apache/gora/accumulo/store/AccumuloStoreTest.java	(working copy)
+@@ -24,6 +24,7 @@
+ import org.apache.gora.store.DataStoreFactory;
+ import org.apache.gora.store.DataStoreTestBase;
+ import org.apache.hadoop.conf.Configuration;
++import org.junit.Ignore;
+ 
+ /**
+  * 
+@@ -45,8 +46,8 @@
+   
+   //Until GORA-66 is resolved this test will always fail, so 
+   //do not run it
++  @Ignore("skipped until GORA-66 is resolved")
+   @Override
+   public void testDeleteByQueryFields() throws IOException {
+-    return;
+   }
+ }
+Index: gora-accumulo/src/test/java/org/apache/gora/accumulo/store/PartitionTest.java
+===================================================================
+--- gora-accumulo/src/test/java/org/apache/gora/accumulo/store/PartitionTest.java	(revision 1497959)
++++ gora-accumulo/src/test/java/org/apache/gora/accumulo/store/PartitionTest.java	(working copy)
+@@ -20,11 +20,11 @@
+ import java.io.DataOutputStream;
+ import java.io.IOException;
+ 
+-import junit.framework.Assert;
+-
+ import org.apache.gora.accumulo.encoders.Encoder;
+ import org.apache.gora.accumulo.encoders.SignedBinaryEncoder;
+ import org.junit.Test;
++import static org.junit.Assert.assertEquals;
++import static org.junit.Assert.assertTrue;
+ 
+ /**
+  * 
+@@ -47,17 +47,17 @@
+ 
+   @Test
+   public void test1() {
+-    Assert.assertEquals(encl(0x006f000000000000l), (long) AccumuloStore.followingKey(encoder, Long.class, new byte[] {0x00, 0x6f}));
+-    Assert.assertEquals(encl(1l), (long) AccumuloStore.followingKey(encoder, Long.class, new byte[] {0, 0, 0, 0, 0, 0, 0, 0}));
+-    Assert.assertEquals(encl(0x106f000000000001l), (long) AccumuloStore.followingKey(encoder, Long.class, new byte[] {0x10, 0x6f, 0, 0, 0, 0, 0, 0}));
+-    Assert.assertEquals(
++    assertEquals(encl(0x006f000000000000l), (long) AccumuloStore.followingKey(encoder, Long.class, new byte[] {0x00, 0x6f}));
++    assertEquals(encl(1l), (long) AccumuloStore.followingKey(encoder, Long.class, new byte[] {0, 0, 0, 0, 0, 0, 0, 0}));
++    assertEquals(encl(0x106f000000000001l), (long) AccumuloStore.followingKey(encoder, Long.class, new byte[] {0x10, 0x6f, 0, 0, 0, 0, 0, 0}));
++    assertEquals(
+         encl(-1l),
+         (long) AccumuloStore.followingKey(encoder, Long.class, new byte[] {(byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff,
+             (byte) 0xff,
+             (byte) 0xfe}));
+     
+-    Assert.assertEquals(encl(0x8000000000000001l), (long) AccumuloStore.followingKey(encoder, Long.class, new byte[] {(byte) 0x80, 0, 0, 0, 0, 0, 0, 0}));
+-    Assert.assertEquals(
++    assertEquals(encl(0x8000000000000001l), (long) AccumuloStore.followingKey(encoder, Long.class, new byte[] {(byte) 0x80, 0, 0, 0, 0, 0, 0, 0}));
++    assertEquals(
+         encl(0x8000000000000000l),
+         (long) AccumuloStore.followingKey(encoder, Long.class, new byte[] {(byte) 0x7f, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff,
+             (byte) 0xff,
+@@ -67,7 +67,7 @@
+     try {
+       AccumuloStore.followingKey(encoder, Long.class,
+           new byte[] {(byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff});
+-      Assert.assertTrue(false);
++      assertTrue(false);
+     } catch (IllegalArgumentException iea) {
+       
+     }
+@@ -75,19 +75,19 @@
+   
+   @Test
+   public void test2() {
+-    Assert.assertEquals(encl(0x00ffffffffffffffl), (long) AccumuloStore.lastPossibleKey(encoder, Long.class, new byte[] {0x01}));
+-    Assert.assertEquals(encl(0x006effffffffffffl), (long) AccumuloStore.lastPossibleKey(encoder, Long.class, new byte[] {0x00, 0x6f}));
+-    Assert.assertEquals(encl(0xff6effffffffffffl), (long) AccumuloStore.lastPossibleKey(encoder, Long.class, new byte[] {(byte) 0xff, 0x6f}));
+-    Assert.assertEquals(encl(0xfffeffffffffffffl), (long) AccumuloStore.lastPossibleKey(encoder, Long.class, new byte[] {(byte) 0xff, (byte) 0xff}));
+-    Assert.assertEquals(encl(0l), (long) AccumuloStore.lastPossibleKey(encoder, Long.class, new byte[] {(byte) 0, 0, 0, 0, 0, 0, 0, 0}));
++    assertEquals(encl(0x00ffffffffffffffl), (long) AccumuloStore.lastPossibleKey(encoder, Long.class, new byte[] {0x01}));
++    assertEquals(encl(0x006effffffffffffl), (long) AccumuloStore.lastPossibleKey(encoder, Long.class, new byte[] {0x00, 0x6f}));
++    assertEquals(encl(0xff6effffffffffffl), (long) AccumuloStore.lastPossibleKey(encoder, Long.class, new byte[] {(byte) 0xff, 0x6f}));
++    assertEquals(encl(0xfffeffffffffffffl), (long) AccumuloStore.lastPossibleKey(encoder, Long.class, new byte[] {(byte) 0xff, (byte) 0xff}));
++    assertEquals(encl(0l), (long) AccumuloStore.lastPossibleKey(encoder, Long.class, new byte[] {(byte) 0, 0, 0, 0, 0, 0, 0, 0}));
+     
+-    Assert.assertEquals(encl(0x7effffffffffffffl), (long) AccumuloStore.lastPossibleKey(encoder, Long.class, new byte[] {(byte) 0x7f}));
+-    Assert.assertEquals(encl(0x7fffffffffffffffl), (long) AccumuloStore.lastPossibleKey(encoder, Long.class, new byte[] {(byte) 0x80}));
+-    Assert.assertEquals(encl(0x80ffffffffffffffl), (long) AccumuloStore.lastPossibleKey(encoder, Long.class, new byte[] {(byte) 0x81}));
++    assertEquals(encl(0x7effffffffffffffl), (long) AccumuloStore.lastPossibleKey(encoder, Long.class, new byte[] {(byte) 0x7f}));
++    assertEquals(encl(0x7fffffffffffffffl), (long) AccumuloStore.lastPossibleKey(encoder, Long.class, new byte[] {(byte) 0x80}));
++    assertEquals(encl(0x80ffffffffffffffl), (long) AccumuloStore.lastPossibleKey(encoder, Long.class, new byte[] {(byte) 0x81}));
+ 
+     try {
+       AccumuloStore.lastPossibleKey(encoder, Long.class, new byte[] {(byte) 0, 0, 0, 0, 0, 0, 0});
+-      Assert.assertTrue(false);
++      assertTrue(false);
+     } catch (IllegalArgumentException iea) {
+       
+     }
+Index: gora-accumulo/src/test/java/org/apache/gora/accumulo/util/HexEncoderTest.java
+===================================================================
+--- gora-accumulo/src/test/java/org/apache/gora/accumulo/util/HexEncoderTest.java	(revision 1497959)
++++ gora-accumulo/src/test/java/org/apache/gora/accumulo/util/HexEncoderTest.java	(working copy)
+@@ -17,7 +17,7 @@
+ package org.apache.gora.accumulo.util;
+ 
+ import org.apache.gora.accumulo.encoders.HexEncoder;
+-import org.junit.Assert;
++import static org.junit.Assert.assertEquals;
+ import org.junit.Test;
+ 
+ /**
+@@ -29,12 +29,12 @@
+   public void testByte() {
+     HexEncoder encoder = new HexEncoder();
+     
+-    Assert.assertEquals("12", new String(encoder.encodeByte((byte) 0x12)));
+-    Assert.assertEquals("f2", new String(encoder.encodeByte((byte) 0xf2)));
++    assertEquals("12", new String(encoder.encodeByte((byte) 0x12)));
++    assertEquals("f2", new String(encoder.encodeByte((byte) 0xf2)));
+     
+     byte b = Byte.MIN_VALUE;
+     while (b != Byte.MAX_VALUE) {
+-      Assert.assertEquals(b, encoder.decodeByte(encoder.encodeByte(b)));
++      assertEquals(b, encoder.decodeByte(encoder.encodeByte(b)));
+       b++;
+     }
+   }
+@@ -43,12 +43,12 @@
+   public void testShort() {
+     HexEncoder encoder = new HexEncoder();
+     
+-    Assert.assertEquals("1234", new String(encoder.encodeShort((short) 0x1234)));
+-    Assert.assertEquals("f234", new String(encoder.encodeShort((short) 0xf234)));
++    assertEquals("1234", new String(encoder.encodeShort((short) 0x1234)));
++    assertEquals("f234", new String(encoder.encodeShort((short) 0xf234)));
+     
+     short s = Short.MIN_VALUE;
+     while (s != Short.MAX_VALUE) {
+-      Assert.assertEquals(s, encoder.decodeShort(encoder.encodeShort(s)));
++      assertEquals(s, encoder.decodeShort(encoder.encodeShort(s)));
+       s++;
+     }
+   }
+Index: gora-accumulo/src/test/java/org/apache/gora/accumulo/util/SignedBinaryEncoderTest.java
+===================================================================
+--- gora-accumulo/src/test/java/org/apache/gora/accumulo/util/SignedBinaryEncoderTest.java	(revision 1497959)
++++ gora-accumulo/src/test/java/org/apache/gora/accumulo/util/SignedBinaryEncoderTest.java	(working copy)
+@@ -19,11 +19,11 @@
+ import java.util.ArrayList;
+ import java.util.Collections;
+ 
+-import junit.framework.Assert;
+-
+ import org.apache.gora.accumulo.encoders.SignedBinaryEncoder;
+ import org.apache.hadoop.io.Text;
+ import org.junit.Test;
++import static org.junit.Assert.assertEquals;
++import static org.junit.Assert.assertTrue;
+ 
+ /**
+  * 
+@@ -38,10 +38,10 @@
+ 
+     while (true) {
+       byte[] enc = encoder.encodeShort(s);
+-      Assert.assertEquals(s, encoder.decodeShort(enc));
++      assertEquals(s, encoder.decodeShort(enc));
+       Text current = new Text(enc);
+       if (prev != null)
+-        Assert.assertTrue(prev.compareTo(current) < 0);
++        assertTrue(prev.compareTo(current) < 0);
+       prev = current;
+       s++;
+       if (s == Short.MAX_VALUE)
+@@ -57,10 +57,10 @@
+ 
+     while (true) {
+       byte[] enc = encoder.encodeInt(i);
+-      Assert.assertEquals(i, encoder.decodeInt(enc));
++      assertEquals(i, encoder.decodeInt(enc));
+       Text current = new Text(enc);
+       if (prev != null)
+-        Assert.assertTrue(prev.compareTo(current) < 0);
++        assertTrue(prev.compareTo(current) < 0);
+       prev = current;
+       i++;
+       if (i == finish)
+@@ -83,10 +83,10 @@
+ 
+     while (true) {
+       byte[] enc = encoder.encodeLong(l);
+-      Assert.assertEquals(l, encoder.decodeLong(enc));
++      assertEquals(l, encoder.decodeLong(enc));
+       Text current = new Text(enc);
+       if (prev != null)
+-        Assert.assertTrue(prev.compareTo(current) < 0);
++        assertTrue(prev.compareTo(current) < 0);
+       prev = current;
+       l++;
+       if (l == finish)
+@@ -124,9 +124,9 @@
+ 
+     for (int i = 0; i < testData.size(); i++) {
+       byte[] enc = encoder.encodeDouble(testData.get(i));
+-      Assert.assertEquals(testData.get(i), encoder.decodeDouble(enc));
++      assertEquals(testData.get(i), (Double) encoder.decodeDouble(enc));
+       if (i > 1) {
+-        Assert.assertTrue("Checking " + testData.get(i) + " > " + testData.get(i - 1),
++        assertTrue("Checking " + testData.get(i) + " > " + testData.get(i - 1),
+             new Text(enc).compareTo(new Text(encoder.encodeDouble(testData.get(i - 1)))) > 0);
+       }
+     }
+@@ -155,9 +155,9 @@
+ 
+     for (int i = 0; i < testData.size(); i++) {
+       byte[] enc = encoder.encodeFloat(testData.get(i));
+-      Assert.assertEquals(testData.get(i), encoder.decodeFloat(enc));
++      assertEquals(testData.get(i), (Float)encoder.decodeFloat(enc));
+       if (i > 1) {
+-        Assert.assertTrue("Checking " + testData.get(i) + " > " + testData.get(i - 1),
++        assertTrue("Checking " + testData.get(i) + " > " + testData.get(i - 1),
+             new Text(enc).compareTo(new Text(encoder.encodeFloat(testData.get(i - 1)))) > 0);
+       }
+     }
+Index: gora-cassandra/src/test/java/org/apache/gora/cassandra/store/TestCassandraStore.java
+===================================================================
+--- gora-cassandra/src/test/java/org/apache/gora/cassandra/store/TestCassandraStore.java	(revision 1497959)
++++ gora-cassandra/src/test/java/org/apache/gora/cassandra/store/TestCassandraStore.java	(working copy)
+@@ -26,91 +26,106 @@
+ import java.io.IOException;
+ 
+ import org.apache.gora.cassandra.GoraCassandraTestDriver;
+-import org.apache.gora.cassandra.store.CassandraStore;
+ import org.apache.gora.examples.generated.Employee;
+ import org.apache.gora.examples.generated.WebPage;
+ import org.apache.gora.store.DataStore;
+ import org.apache.gora.store.DataStoreFactory;
+ import org.apache.gora.store.DataStoreTestBase;
+ import org.apache.hadoop.conf.Configuration;
+-import org.junit.After;
+ import org.junit.Before;
+-import org.junit.Test;
++import org.junit.Ignore;
+ 
+ /**
+  * Test for CassandraStore.
+  */
+ public class TestCassandraStore extends DataStoreTestBase{
+-	
+-  private Configuration conf;
+-	
+-  static {
+-    setTestDriver(new GoraCassandraTestDriver());
+-  }
+-	
+-  @Before
+-  public void setUp() throws Exception {
+-    super.setUp();
+-  }
+-	
+-  @SuppressWarnings("unchecked")
+-  @Override
+-  protected DataStore<String, Employee> createEmployeeDataStore() throws IOException {
+-    return DataStoreFactory.getDataStore(CassandraStore.class, String.class, Employee.class, conf);
+-  }
+-	
+-  @SuppressWarnings("unchecked")
+-  @Override
+-  protected DataStore<String, WebPage> createWebPageDataStore() throws IOException {
+-    return DataStoreFactory.getDataStore(CassandraStore.class, String.class, WebPage.class, conf);
+-  }
+-	
+-  public GoraCassandraTestDriver getTestDriver() {
+-    return (GoraCassandraTestDriver) testDriver;
+-  }
+-	
+ 
++    /*
++     * conf is never assigned and never used. Consider removing it.
++     */
++    private Configuration conf;
++
++    static {
++        setTestDriver(new GoraCassandraTestDriver());
++    }
++
++    @Before
++    public void setUp() throws Exception {
++        super.setUp();
++    }
++
++    @SuppressWarnings("unchecked")
++    @Override
++    protected DataStore<String, Employee> createEmployeeDataStore() throws IOException {
++        return DataStoreFactory.getDataStore(CassandraStore.class, String.class, Employee.class, conf);
++    }
++
++    @SuppressWarnings("unchecked")
++    @Override
++    protected DataStore<String, WebPage> createWebPageDataStore() throws IOException {
++        return DataStoreFactory.getDataStore(CassandraStore.class, String.class, WebPage.class, conf);
++    }
++
++    public GoraCassandraTestDriver getTestDriver() {
++        return (GoraCassandraTestDriver) testDriver;
++    }
++
++
+ // ============================================================================
+-  //We need to skip the following tests for a while until we fix some issues..
+-  
+-  @Override
+-  public void testGetWebPageDefaultFields() throws IOException {}
+-  @Override
+-  public void testQuery() throws IOException {}
+-  @Override
+-  public void testQueryStartKey() throws IOException {}
+-  @Override
+-  public void testQueryEndKey() throws IOException {}
+-  @Override
+-  public void testQueryKeyRange() throws IOException {}
+-  @Override
+-  public void testQueryWebPageSingleKeyDefaultFields() throws IOException {}
+-  @Override
+-  public void testDelete() throws IOException {}
+-  @Override
+-  public void testDeleteByQuery() throws IOException {}
+-  @Override
+-  public void testDeleteByQueryFields() throws IOException {}
+-  @Override
+-  public void testGetPartitions() throws IOException {}
+-  @Override
+-  public void testGetRecursive() throws IOException {}
+-  @Override
+-  public void testGetDoubleRecursive() throws IOException{}
+-  @Override
+-  public void testGetNested() throws IOException {}
+-  @Override
+-  public void testGet3UnionField() throws IOException {}
++    //We need to skip the following tests for a while until we fix some issues..
++
++    @Ignore("skipped until some bugs are fixed")
++    @Override
++    public void testGetWebPageDefaultFields() throws IOException {}
++    @Ignore("skipped until some bugs are fixed")
++    @Override
++    public void testQuery() throws IOException {}
++    @Ignore("skipped until some bugs are fixed")
++    @Override
++    public void testQueryStartKey() throws IOException {}
++    @Ignore("skipped until some bugs are fixed")
++    @Override
++    public void testQueryEndKey() throws IOException {}
++    @Ignore("skipped until some bugs are fixed")
++    @Override
++    public void testQueryKeyRange() throws IOException {}
++    @Ignore("skipped until some bugs are fixed")
++    @Override
++    public void testQueryWebPageSingleKeyDefaultFields() throws IOException {}
++    @Ignore("skipped until some bugs are fixed")
++    @Override
++    public void testDelete() throws IOException {}
++    @Ignore("skipped until some bugs are fixed")
++    @Override
++    public void testDeleteByQuery() throws IOException {}
++    @Ignore("skipped until some bugs are fixed")
++    @Override
++    public void testDeleteByQueryFields() throws IOException {}
++    @Ignore("skipped until some bugs are fixed")
++    @Override
++    public void testGetPartitions() throws IOException {}
++    @Ignore("skipped until some bugs are fixed")
++    @Override
++    public void testGetRecursive() throws IOException {}
++    @Ignore("skipped until some bugs are fixed")
++    @Override
++    public void testGetDoubleRecursive() throws IOException{}
++    @Ignore("skipped until some bugs are fixed")
++    @Override
++    public void testGetNested() throws IOException {}
++    @Ignore("skipped until some bugs are fixed")
++    @Override
++    public void testGet3UnionField() throws IOException {}
+ // ============================================================================
+ 
+ 
+-  public static void main(String[] args) throws Exception {
+-    TestCassandraStore test = new TestCassandraStore();
+-    test.setUpClass();
+-    test.setUp();
+-    
+-    test.tearDown();
+-    test.tearDownClass();
+-  }
++    public static void main(String[] args) throws Exception {
++        TestCassandraStore test = new TestCassandraStore();
++        setUpClass();
++        test.setUp();
+ 
++        test.tearDown();
++        tearDownClass();
++    }
++
+ }
+Index: gora-dynamodb/src/main/java/org/apache/gora/dynamodb/store/DynamoDBStore.java
+===================================================================
+--- gora-dynamodb/src/main/java/org/apache/gora/dynamodb/store/DynamoDBStore.java	(revision 1497959)
++++ gora-dynamodb/src/main/java/org/apache/gora/dynamodb/store/DynamoDBStore.java	(working copy)
+@@ -211,7 +211,7 @@
+     
+         String tableName = tableElement.getAttributeValue("name");
+         long readCapacUnits = Long.parseLong(tableElement.getAttributeValue("readcunit"));
+-        long writeCapacUnits = Long.parseLong(tableElement.getAttributeValue("readcunit"));
++        long writeCapacUnits = Long.parseLong(tableElement.getAttributeValue("writecunit"));
+     
+         mappingBuilder.setTableName(tableName);
+         mappingBuilder.setProvisionedThroughput(tableName, readCapacUnits, writeCapacUnits);
+Index: gora-dynamodb/src/test/java/org/apache/gora/dynamodb/TestDynamoDBStore.java
+===================================================================
+--- gora-dynamodb/src/test/java/org/apache/gora/dynamodb/TestDynamoDBStore.java	(revision 1497959)
++++ gora-dynamodb/src/test/java/org/apache/gora/dynamodb/TestDynamoDBStore.java	(working copy)
+@@ -21,7 +21,8 @@
+ import java.io.IOException;
+ import java.util.HashSet;
+ 
+-import junit.framework.Assert;
++import static junit.framework.Assert.assertTrue;
++import static junit.framework.Assert.assertFalse;
+ 
+ import org.apache.gora.dynamodb.query.DynamoDBKey;
+ import org.apache.gora.dynamodb.query.DynamoDBQuery;
+@@ -30,10 +31,7 @@
+ import org.apache.gora.query.Result;
+ import org.apache.gora.store.DataStore;
+ import org.apache.gora.store.WSDataStoreTestBase;
+-import org.junit.After;
+-import org.junit.Before;
+-import org.junit.BeforeClass;
+-import org.junit.Test;
++import org.junit.*;
+ 
+ import org.slf4j.Logger;
+ import org.slf4j.LoggerFactory;
+@@ -45,352 +43,365 @@
+  */
+ public class TestDynamoDBStore extends WSDataStoreTestBase<DynamoDBKey, person> {
+ 
+-  public static final Logger log = LoggerFactory.getLogger(TestDynamoDBStore.class);
++    public static final Logger log = LoggerFactory.getLogger(TestDynamoDBStore.class);
+ 
+-  static {
+-    setTestDriver(new GoraDynamoDBTestDriver());
+-  }
+-  
+-  @Before
+-  public void setUp() throws Exception {
+-    setPersistentKeyClass(DynamoDBKey.class);
+-    setPersistentValClass(person.class);
+-    super.setUp();
+-  }
+-  
+-  public GoraDynamoDBTestDriver getTestDriver() {
+-    return (GoraDynamoDBTestDriver) testDriver;
+-  }
+-  
++    static {
++        setTestDriver(new GoraDynamoDBTestDriver());
++    }
++
++    @Before
++    public void setUp() throws Exception {
++        setPersistentKeyClass(DynamoDBKey.class);
++        setPersistentValClass(person.class);
++        super.setUp();
++    }
++
++    public GoraDynamoDBTestDriver getTestDriver() {
++        return (GoraDynamoDBTestDriver) testDriver;
++    }
++
+ //============================================================================
+-  //We need to skip the following tests for a while until we fix some issues..
+-  @Override
+-  public void testQueryStartKey() throws IOException {
+-    log.info("test method: TestQueryStartKey SKIPPED.");
+-  }
+-  @Override
+-  public void testQueryEndKey() throws IOException {
+-    log.info("test method: TestQueryEndKey SKIPPED.");
+-  }
+-  @Override
+-  public void testDeleteByQueryFields() throws IOException {
+-    log.info("test method: TestDeleteByQueryFields SKIPPED.");
+-  }
+-  @Override
+-  public void testNewInstance() throws IOException, Exception {
+-    log.info("test method: TestNewInstance SKIPPED.");
+-  } 
+-  @Override
+-  public void testAutoCreateSchema() throws Exception {
+-    log.info("test method: TestAutoCreateSchema SKIPPED.");
+-  }
+-  @Override
+-  public void testTruncateSchema() throws Exception {
+-    log.info("test method: TestTruncateSchema SKIPPED.");
+-  }
+-  @Override
+-  public void testPutNested() throws IOException, Exception {
+-    log.info("test method: TestPutNested SKIPPED.");
+-  }
+-  @Override
+-  public void testPutArray() throws IOException, Exception {
+-    log.info("test method: TestPutArray SKIPPED.");
+-  }
+-  @Override
+-  public void testPutBytes() throws IOException, Exception {
+-    log.info("test method: TestPutBytes SKIPPED."); 
+-  }
+-  @Override
+-  public void testPutMap() throws IOException, Exception {
+-    log.info("test method: TestPutMap SKIPPED.");
+-  }
+-  @Override
+-  public void testEmptyUpdate() throws IOException, Exception {
+-    log.info("test method: TestEmptyUpdate SKIPPED."); 
+-  }
+-  @Override
+-  public void testDeleteSchema() throws IOException, Exception {
+-    log.info("test method: TestDeleteSchema SKIPPED.");
+-  }
+-  @Override
+-  public void testGetWithFields() throws IOException, Exception {
+-    log.info("test method: TestGetWithFields SKIPPED."); 
+-  }
++    //We need to skip the following tests for a while until we fix some issues..
++    @Ignore("Needs to be skipped for a while until some issues are fixed")
++    @Override
++    public void testQueryStartKey() throws IOException {
++        log.info("test method: TestQueryStartKey SKIPPED.");
++    }
++    @Ignore("Needs to be skipped for a while until some issues are fixed")
++    @Override
++    public void testQueryEndKey() throws IOException {
++        log.info("test method: TestQueryEndKey SKIPPED.");
++    }
++    @Ignore("Needs to be skipped for a while until some issues are fixed")
++    @Override
++    public void testDeleteByQueryFields() throws IOException {
++        log.info("test method: TestDeleteByQueryFields SKIPPED.");
++    }
++    @Ignore("Needs to be skipped for a while until some issues are fixed")
++    @Override
++    public void testNewInstance() throws IOException, Exception {
++        log.info("test method: TestNewInstance SKIPPED.");
++    }
++    @Ignore("Needs to be skipped for a while until some issues are fixed")
++    @Override
++    public void testAutoCreateSchema() throws Exception {
++        log.info("test method: TestAutoCreateSchema SKIPPED.");
++    }
++    @Ignore("Needs to be skipped for a while until some issues are fixed")
++    @Override
++    public void testTruncateSchema() throws Exception {
++        log.info("test method: TestTruncateSchema SKIPPED.");
++    }
++    @Ignore("Needs to be skipped for a while until some issues are fixed")
++    @Override
++    public void testPutNested() throws IOException, Exception {
++        log.info("test method: TestPutNested SKIPPED.");
++    }
++    @Ignore("Needs to be skipped for a while until some issues are fixed")
++    @Override
++    public void testPutArray() throws IOException, Exception {
++        log.info("test method: TestPutArray SKIPPED.");
++    }
++    @Ignore("Needs to be skipped for a while until some issues are fixed")
++    @Override
++    public void testPutBytes() throws IOException, Exception {
++        log.info("test method: TestPutBytes SKIPPED.");
++    }
++    @Ignore("Needs to be skipped for a while until some issues are fixed")
++    @Override
++    public void testPutMap() throws IOException, Exception {
++        log.info("test method: TestPutMap SKIPPED.");
++    }
++    @Ignore("Needs to be skipped for a while until some issues are fixed")
++    @Override
++    public void testEmptyUpdate() throws IOException, Exception {
++        log.info("test method: TestEmptyUpdate SKIPPED.");
++    }
++    @Ignore("Needs to be skipped for a while until some issues are fixed")
++    @Override
++    public void testDeleteSchema() throws IOException, Exception {
++        log.info("test method: TestDeleteSchema SKIPPED.");
++    }
++    @Ignore("Needs to be skipped for a while until some issues are fixed")
++    @Override
++    public void testGetWithFields() throws IOException, Exception {
++        log.info("test method: TestGetWithFields SKIPPED.");
++    }
+ //============================================================================
+-  
+-  /**
+-   * Tests deleting items using a query
+-   */
+-  @Override
+-  public void assertTestDeleteByQueryDataStore(){
+-    try {
+-      log.info("test method: TestDeleteByQuery using DynamoDB store.");
+-      DynamoDBKey<String, String> dKey = new DynamoDBKey<String, String>();
+-      dKey.setHashKey("NOWHERE");
+-      dKey.setRangeKey("10/10/1880");
+-      person p1 = buildPerson(dKey.getHashKey().toString(), dKey.getRangeKey().toString(), "John", "Doe", "Peru", "Brazil", "Ecuador");
+-      dataStore.put(dKey, p1);
+-      dKey.setRangeKey("11/10/1707");
+-      person p2 = buildPerson(dKey.getHashKey().toString(), dKey.getRangeKey().toString(), "Juan", "Perez", "Germany", "USA", "Scotland");
+-      dataStore.put(dKey, p2);
+-      DynamoDBQuery.setScanCompOp(ComparisonOperator.LE);
+-      DynamoDBQuery.setType(DynamoDBQuery.SCAN_QUERY);
+-      Query<DynamoDBKey, person> query = new DynamoDBQuery<DynamoDBKey, person>();
+-      query.setKey(dKey);
+-      log.info("Number of records deleted: "+ dataStore.deleteByQuery(query));
+-    } catch (Exception e) {
+-      log.error("Error while running test: TestDeleteByQuery");
+-      e.printStackTrace();
++
++    /**
++     * Tests deleting items using a query
++     */
++    @Override
++    public void assertTestDeleteByQueryDataStore(){
++        try {
++            log.info("test method: TestDeleteByQuery using DynamoDB store.");
++            DynamoDBKey<String, String> dKey = new DynamoDBKey<String, String>();
++            dKey.setHashKey("NOWHERE");
++            dKey.setRangeKey("10/10/1880");
++            person p1 = buildPerson(dKey.getHashKey().toString(), dKey.getRangeKey().toString(), "John", "Doe", "Peru", "Brazil", "Ecuador");
++            dataStore.put(dKey, p1);
++            dKey.setRangeKey("11/10/1707");
++            person p2 = buildPerson(dKey.getHashKey().toString(), dKey.getRangeKey().toString(), "Juan", "Perez", "Germany", "USA", "Scotland");
++            dataStore.put(dKey, p2);
++            DynamoDBQuery.setScanCompOp(ComparisonOperator.LE);
++            DynamoDBQuery.setType(DynamoDBQuery.SCAN_QUERY);
++            Query<DynamoDBKey, person> query = new DynamoDBQuery<DynamoDBKey, person>();
++            query.setKey(dKey);
++            log.info("Number of records deleted: "+ dataStore.deleteByQuery(query));
++        } catch (Exception e) {
++            log.error("Error while running test: TestDeleteByQuery");
++            e.printStackTrace();
++        }
+     }
+-  }
+-  
+-  /**
+-   * Tests updating a specific item
+-   */
+-  @Override
+-  public void assertTestUpdateDataStore(){
+-    try{
+-      log.info("test method: TestUpdate using DynamoDB store.");
+-      DynamoDBKey<String, String> dKey = new DynamoDBKey<String, String>();
+-      dKey.setHashKey("Peru");
+-      dKey.setRangeKey("10/10/1880");
+-      person p1 = buildPerson(dKey.getHashKey().toString(), dKey.getRangeKey().toString(), "Inca", "Atahualpa", "Peru", "Brazil", "Ecuador");
+-      dataStore.put(dKey, p1);
+-      p1.setFirstName("Ataucuri");
+-      dataStore.put(dKey, p1);
+-    } catch (Exception e){
+-      log.error("error in test method: testUpdate.");
+-      e.printStackTrace();
++
++    /**
++     * Tests updating a specific item
++     */
++    @Override
++    public void assertTestUpdateDataStore(){
++        try{
++            log.info("test method: TestUpdate using DynamoDB store.");
++            DynamoDBKey<String, String> dKey = new DynamoDBKey<String, String>();
++            dKey.setHashKey("Peru");
++            dKey.setRangeKey("10/10/1880");
++            person p1 = buildPerson(dKey.getHashKey().toString(), dKey.getRangeKey().toString(), "Inca", "Atahualpa", "Peru", "Brazil", "Ecuador");
++            dataStore.put(dKey, p1);
++            p1.setFirstName("Ataucuri");
++            dataStore.put(dKey, p1);
++        } catch (Exception e){
++            log.error("error in test method: testUpdate.");
++            e.printStackTrace();
++        }
+     }
+-  }
+-  
+-  /**
+-   * Method to test deleting a schema
+-   
+-  @Override
+-  public void assertDeleteSchema(){
+-    try {
+-      log.info("test method: TestDeleteSchema using DynamoDB store.");
+-    dataStore.deleteSchema();
+-    } catch (Exception e) {
+-      log.error("error in test method: testDeleteSchema.");
+-      e.printStackTrace();
++
++    /**
++     * Method to test deleting a schema
++
++     @Override
++     public void assertDeleteSchema(){
++     try {
++     log.info("test method: TestDeleteSchema using DynamoDB store.");
++     dataStore.deleteSchema();
++     } catch (Exception e) {
++     log.error("error in test method: testDeleteSchema.");
++     e.printStackTrace();
++     }
++     }
++     */
++    /**
++     * Method to verify if a schema exists or not
++     */
++    @Override
++    public void assertSchemaExists(String schemaName) throws Exception {
++        log.info("test method: TestSchemaExists using DynamoDB store.");
++        assertTrue(dataStore.schemaExists());
+     }
+-  }
+-*/
+-  /**
+-   * Method to verify if a schema exists or not
+-   */
+-  @Override
+-  public void assertSchemaExists(String schemaName) throws Exception {
+-    log.info("test method: TestSchemaExists using DynamoDB store.");
+-    Assert.assertTrue(dataStore.schemaExists());
+-  }
+ 
+-  /**
+-   * Method to put items into the data store
+-   */
+-  @Override
+-  public void assertPut(){
+-    try {
+-      log.info("test method: TestPut using DynamoDB store.");
+-      DynamoDBKey<String, String> dKey = new DynamoDBKey<String, String>();
+-      dKey.setHashKey("Peru");
+-      dKey.setRangeKey("10/10/1880");
+-      person p1 = buildPerson(dKey.getHashKey().toString(), dKey.getRangeKey().toString(), "Inca", "Atahualpa", "Peru", "Brazil", "Ecuador");
+-      dataStore.put(dKey, p1);
+-      dKey.setRangeKey("11/10/1707");
+-      person p2 = buildPerson(dKey.getHashKey().toString(), dKey.getRangeKey().toString(), "William", "Wallace", "Germany", "USA", "Scotland");
+-      dataStore.put(dKey, p2);
+-    } catch (Exception e) {
+-      log.error("error in test method: testPut.");
+-    e.printStackTrace();
++    /**
++     * Method to put items into the data store
++     */
++    @Override
++    public void assertPut(){
++        try {
++            log.info("test method: TestPut using DynamoDB store.");
++            DynamoDBKey<String, String> dKey = new DynamoDBKey<String, String>();
++            dKey.setHashKey("Peru");
++            dKey.setRangeKey("10/10/1880");
++            person p1 = buildPerson(dKey.getHashKey().toString(), dKey.getRangeKey().toString(), "Inca", "Atahualpa", "Peru", "Brazil", "Ecuador");
++            dataStore.put(dKey, p1);
++            dKey.setRangeKey("11/10/1707");
++            person p2 = buildPerson(dKey.getHashKey().toString(), dKey.getRangeKey().toString(), "William", "Wallace", "Germany", "USA", "Scotland");
++            dataStore.put(dKey, p2);
++        } catch (Exception e) {
++            log.error("error in test method: testPut.");
++            e.printStackTrace();
++        }
+     }
+-  }
+-  
+-  /**
+-   * Method to query the data store
+-   */
+-  @Override
+-  public void assertTestQueryDataStore(){
+-    log.info("test method: testQuery using DynamoDB store.");
+-    try {
+-      DynamoDBKey<String, String> dKey = new DynamoDBKey<String, String>();
+-      dKey.setHashKey("Peru");
+-      DynamoDBQuery.setScanCompOp(ComparisonOperator.LE);
+-      DynamoDBQuery.setType(DynamoDBQuery.SCAN_QUERY);
+-      Query<DynamoDBKey, person> query = new DynamoDBQuery<DynamoDBKey, person>();
+-      query.setKey(dKey);
+-      Result<DynamoDBKey, person> queryResult = dataStore.execute(query);
+-      processQueryResult(queryResult);
+-  } catch (Exception e) {
+-    log.error("error in test method: testQuery.");
+-      e.printStackTrace();
++
++    /**
++     * Method to query the data store
++     */
++    @Override
++    public void assertTestQueryDataStore(){
++        log.info("test method: testQuery using DynamoDB store.");
++        try {
++            DynamoDBKey<String, String> dKey = new DynamoDBKey<String, String>();
++            dKey.setHashKey("Peru");
++            DynamoDBQuery.setScanCompOp(ComparisonOperator.LE);
++            DynamoDBQuery.setType(DynamoDBQuery.SCAN_QUERY);
++            Query<DynamoDBKey, person> query = new DynamoDBQuery<DynamoDBKey, person>();
++            query.setKey(dKey);
++            Result<DynamoDBKey, person> queryResult = dataStore.execute(query);
++            processQueryResult(queryResult);
++        } catch (Exception e) {
++            log.error("error in test method: testQuery.");
++            e.printStackTrace();
++        }
+     }
+-  }
+-  
+-  /**
+-   * Method to query items into the data store
+-   */
+-  @Override
+-  public void assertTestQueryKeyRange(){
+-    log.info("test method: testQueryKeyRange using specific data store.");  
+-    try {
+-      DynamoDBKey<String, String> dKey = new DynamoDBKey<String, String>();
+-      DynamoDBKey<String, String> startKey = new DynamoDBKey<String, String>();
+-      DynamoDBKey<String, String> endKey = new DynamoDBKey<String, String>();
+-      dKey.setHashKey("Peru");
+-      startKey.setRangeKey("01/01/1700");
+-      endKey.setRangeKey("31/12/1900");
+-      DynamoDBQuery.setRangeCompOp(ComparisonOperator.BETWEEN);
+-      DynamoDBQuery.setType(DynamoDBQuery.RANGE_QUERY);
+-      Query<DynamoDBKey, person> query = new DynamoDBQuery<DynamoDBKey, person>();
+-      query.setKey(dKey);
+-      query.setStartKey(startKey);
+-      query.setEndKey(endKey);
+-      Result<DynamoDBKey, person> queryResult = dataStore.execute(query);
+-      processQueryResult(queryResult);
+-    } catch (Exception e) {
+-      log.error("error in test method: testQueryKeyRange.");
+-      e.printStackTrace();
++
++    /**
++     * Method to query items into the data store
++     */
++    @Override
++    public void assertTestQueryKeyRange(){
++        log.info("test method: testQueryKeyRange using specific data store.");
++        try {
++            DynamoDBKey<String, String> dKey = new DynamoDBKey<String, String>();
++            DynamoDBKey<String, String> startKey = new DynamoDBKey<String, String>();
++            DynamoDBKey<String, String> endKey = new DynamoDBKey<String, String>();
++            dKey.setHashKey("Peru");
++            startKey.setRangeKey("01/01/1700");
++            endKey.setRangeKey("31/12/1900");
++            DynamoDBQuery.setRangeCompOp(ComparisonOperator.BETWEEN);
++            DynamoDBQuery.setType(DynamoDBQuery.RANGE_QUERY);
++            Query<DynamoDBKey, person> query = new DynamoDBQuery<DynamoDBKey, person>();
++            query.setKey(dKey);
++            query.setStartKey(startKey);
++            query.setEndKey(endKey);
++            Result<DynamoDBKey, person> queryResult = dataStore.execute(query);
++            processQueryResult(queryResult);
++        } catch (Exception e) {
++            log.error("error in test method: testQueryKeyRange.");
++            e.printStackTrace();
++        }
+     }
+-  }
+-  
+-  /**
+-   * Method to get an specific object using a key
+-   */
+-  @Override
+-  public void assertTestGetDataStore(){
+-    log.info("test method: testGet using specific data store.");
+-    try {
+-      DynamoDBKey<String, String> dKey = new DynamoDBKey<String, String>();
+-      dKey.setHashKey("USA");
+-      dKey.setRangeKey("10/10/1999");
+-      // insert item
+-      person p1 = buildPerson(dKey.getHashKey().toString(), dKey.getRangeKey().toString(), "Inca", "Atahualpa", "Peru", "Brazil", "Ecuador");
+-      dataStore.put(dKey, p1);
+-      // get item
+-      person p2 = dataStore.get(dKey);
+-      printPersonInfo(p2);
+-    } catch (Exception e) {
+-      log.error("error in test method: testGetDataStore.");
+-      e.printStackTrace();
++
++    /**
++     * Method to get an specific object using a key
++     */
++    @Override
++    public void assertTestGetDataStore(){
++        log.info("test method: testGet using specific data store.");
++        try {
++            DynamoDBKey<String, String> dKey = new DynamoDBKey<String, String>();
++            dKey.setHashKey("USA");
++            dKey.setRangeKey("10/10/1999");
++            // insert item
++            person p1 = buildPerson(dKey.getHashKey().toString(), dKey.getRangeKey().toString(), "Inca", "Atahualpa", "Peru", "Brazil", "Ecuador");
++            dataStore.put(dKey, p1);
++            // get item
++            person p2 = dataStore.get(dKey);
++            printPersonInfo(p2);
++        } catch (Exception e) {
++            log.error("error in test method: testGetDataStore.");
++            e.printStackTrace();
++        }
+     }
+-  }
+-  
+-  /**
+-   * Method to delete items into the data store
+-   */
+-  @Override
+-  public void assertTestDeleteDataStore() {
+-    log.info("test method: testDelete by key");
+-    try {
+-      DynamoDBKey<String, String> dKey = new DynamoDBKey<String, String>();
+-      dKey.setHashKey("Brazil");
+-      dKey.setRangeKey("10/10/1985");
+-      person p1 = new person();
+-      p1.setHashKey(dKey.getHashKey());
+-      p1.setRangeKey(dKey.getRangeKey());
+-      p1.setFirstName("Joao");
+-      p1.setLastName("Velasco");
+-      dataStore.put(dKey, p1);
+-      Assert.assertTrue(dataStore.delete(dKey));
+-      dKey.setRangeKey("10/10/1000");
+-      Assert.assertFalse(dataStore.delete(dKey));
+-    }catch (Exception e) {
+-      log.error("error in test method: testDeleteDataStore.");
+-      e.printStackTrace();
+-  }
+-  }
+-  
+-  /**
+-   * Method to create the data store
+-   */
+-  @Override
+-  protected DataStore<DynamoDBKey, person> createDataStore() {
+-   log.info("Creating DynamoDB data store.");
+-    try {
+-      dataStore = getTestDriver().getDataStore();
+-      dataStore.createSchema();
+-    } catch (Exception e) {
+-      log.error("error while creating DynamoDB data store");
+-      e.printStackTrace();
++
++    /**
++     * Method to delete items into the data store
++     */
++    @Override
++    public void assertTestDeleteDataStore() {
++        log.info("test method: testDelete by key");
++        try {
++            DynamoDBKey<String, String> dKey = new DynamoDBKey<String, String>();
++            dKey.setHashKey("Brazil");
++            dKey.setRangeKey("10/10/1985");
++            person p1 = new person();
++            p1.setHashKey(dKey.getHashKey());
++            p1.setRangeKey(dKey.getRangeKey());
++            p1.setFirstName("Joao");
++            p1.setLastName("Velasco");
++            dataStore.put(dKey, p1);
++            assertTrue(dataStore.delete(dKey));
++            dKey.setRangeKey("10/10/1000");
++            assertFalse(dataStore.delete(dKey));
++        }catch (Exception e) {
++            log.error("error in test method: testDeleteDataStore.");
++            e.printStackTrace();
++        }
+     }
+-    return dataStore;
+-  } 
+-  
+-  /**
+-   * Processes query results from an query execution
+-   * @param pQueryResult
+-   */
+-  private void processQueryResult(Result<DynamoDBKey, person> pQueryResult){
+-    try {
+-      log.debug("Processing tests results.");
+-      while(pQueryResult.next())
+-        printPersonInfo(pQueryResult.get());
+-    } catch (IOException e) {
+-      log.error("error while processing tests results.");
+-      e.printStackTrace();
+-    } catch (Exception e) {
+-      log.error("error while processing tests results.");
+-      e.printStackTrace();
++
++    /**
++     * Method to create the data store
++     */
++    @Override
++    protected DataStore<DynamoDBKey, person> createDataStore() {
++        log.info("Creating DynamoDB data store.");
++        try {
++            dataStore = getTestDriver().getDataStore();
++            dataStore.createSchema();
++        } catch (Exception e) {
++            log.error("error while creating DynamoDB data store");
++            e.printStackTrace();
++        }
++        return dataStore;
+     }
+-  }
+-  
+-  /**
+-   * Method to generate persisten objects
+-   * @param key
+-   * @param pRangeKey
+-   * @param pFirstName
+-   * @param pLastName
+-   * @param places
+-   * @return
+-   */
+-  private person buildPerson(String key, String pRangeKey, String pFirstName, String pLastName, String ...places){
+-    person newPerson = new person();
+-    newPerson.setRangeKey(pRangeKey);
+-    newPerson.setHashKey(key);
+-    newPerson.setFirstName(pFirstName);
+-    newPerson.setLastName(pLastName);
+-    newPerson.setVisitedplaces(new HashSet<String>());
+-    for(String place : places)
+-  	  newPerson.getVisitedplaces().add(place);
+-    return newPerson;
+-  }
+-  
+-  /**
+-   * Method to print the object returned from Get method
+-   * @param pPerson
+-   */
+-  private void printPersonInfo(person pPerson){
+-    System.out.println(	"Origin:\t" + pPerson.getHashKey() +
+-    "\n Birthday:\t" + pPerson.getRangeKey() +
+-    "\n FirstName:" + pPerson.getFirstName() +
+-    "\n LastName:" + pPerson.getLastName() + 
+-    "\n Visited Places:");
+-    for(String place : pPerson.getVisitedplaces())
+-      System.out.println("\t" + place);
+-  }
+-  
+-  public static void main(String[] args) throws Exception {
+-    TestDynamoDBStore test = new TestDynamoDBStore();
+-    try{
+-      test.setPersistentKeyClass(DynamoDBKey.class);
+-      test.setPersistentValClass(person.class);
+-      TestDynamoDBStore.setUpClass();
+-      test.setUp();
+-      test.testPut();
++
++    /**
++     * Processes query results from an query execution
++     * @param pQueryResult
++     */
++    private void processQueryResult(Result<DynamoDBKey, person> pQueryResult){
++        try {
++            log.debug("Processing tests results.");
++            while(pQueryResult.next())
++                printPersonInfo(pQueryResult.get());
++        } catch (IOException e) {
++            log.error("error while processing tests results.");
++            e.printStackTrace();
++        } catch (Exception e) {
++            log.error("error while processing tests results.");
++            e.printStackTrace();
++        }
++    }
++
++    /**
++     * Method to generate persisten objects
++     * @param key
++     * @param pRangeKey
++     * @param pFirstName
++     * @param pLastName
++     * @param places
++     * @return
++     */
++    private person buildPerson(String key, String pRangeKey, String pFirstName, String pLastName, String ...places){
++        person newPerson = new person();
++        newPerson.setRangeKey(pRangeKey);
++        newPerson.setHashKey(key);
++        newPerson.setFirstName(pFirstName);
++        newPerson.setLastName(pLastName);
++        newPerson.setVisitedplaces(new HashSet<String>());
++        for(String place : places)
++          newPerson.getVisitedplaces().add(place);
++        return newPerson;
++    }
++
++    /**
++     * Method to print the object returned from Get method
++     * @param pPerson
++     */
++    private void printPersonInfo(person pPerson){
++        System.out.println("Origin:\t" + pPerson.getHashKey() +
++                "\n Birthday:\t" + pPerson.getRangeKey() +
++                "\n FirstName:" + pPerson.getFirstName() +
++                "\n LastName:" + pPerson.getLastName() +
++                "\n Visited Places:");
++        for(String place : pPerson.getVisitedplaces())
++            System.out.println("\t" + place);
++    }
++
++    public static void main(String[] args) throws Exception {
++        TestDynamoDBStore test = new TestDynamoDBStore();
++        try{
++            test.setPersistentKeyClass(DynamoDBKey.class);
++            test.setPersistentValClass(person.class);
++            TestDynamoDBStore.setUpClass();
++            test.setUp();
++            test.testPut();
+       /*test.testGet();
+       test.testQuery();
+       test.testUpdate();
+       test.testQueryKeyRange();
+       test.testDelete();
+       test.testDeleteByQuery(); */
+-    }catch (Exception e){
+-      log.error("Error while executing tests.");
+-    }finally{
+-      test.tearDown();
+-      TestDynamoDBStore.tearDownClass();
++        }catch (Exception e){
++            log.error("Error while executing tests.");
++        }finally{
++            test.tearDown();
++            TestDynamoDBStore.tearDownClass();
++        }
+     }
+-  }
+ }
+Index: gora-core/src/main/java/org/apache/gora/persistency/Persistent.java
+===================================================================
+--- gora-core/src/main/java/org/apache/gora/persistency/Persistent.java	(revision 1497959)
++++ gora-core/src/main/java/org/apache/gora/persistency/Persistent.java	(working copy)
+@@ -182,4 +182,4 @@
+   
+   Persistent clone();
+ 
+-}
++}
+\ No newline at end of file
+Index: gora-core/src/main/java/org/apache/gora/store/DataStoreFactory.java
+===================================================================
+--- gora-core/src/main/java/org/apache/gora/store/DataStoreFactory.java	(revision 1497959)
++++ gora-core/src/main/java/org/apache/gora/store/DataStoreFactory.java	(working copy)
+@@ -86,7 +86,7 @@
+           stream.close();
+         }
+       } else {
+-        log.warn(GORA_DEFAULT_PROPERTIES_FILE + " not found, properties will be empty.");
++        log.info(GORA_DEFAULT_PROPERTIES_FILE + " not found, properties will be empty.");
+       }
+       return properties;
+     } catch(Exception e) {
+Index: gora-core/src/test/java/org/apache/gora/GoraTestDriver.java
+===================================================================
+--- gora-core/src/test/java/org/apache/gora/GoraTestDriver.java	(revision 1497959)
++++ gora-core/src/test/java/org/apache/gora/GoraTestDriver.java	(working copy)
+@@ -105,6 +105,7 @@
+         (Class<? extends DataStore<K,T>>)dataStoreClass, keyClass, persistentClass, conf);
+     dataStores.add(dataStore);
+ 
++    log.info("Datastore for "+persistentClass+" was added.");
+     return dataStore;
+   }
+   
+Index: gora-core/src/test/java/org/apache/gora/avro/TestPersistentDatumReader.java
+===================================================================
+--- gora-core/src/test/java/org/apache/gora/avro/TestPersistentDatumReader.java	(revision 1497959)
++++ gora-core/src/test/java/org/apache/gora/avro/TestPersistentDatumReader.java	(working copy)
+@@ -20,15 +20,11 @@
+ 
+ import java.io.IOException;
+ 
+-import junit.framework.Assert;
+-
+ import org.apache.avro.util.Utf8;
+-import org.apache.gora.avro.PersistentDatumReader;
+ import org.apache.gora.examples.WebPageDataCreator;
+ import org.apache.gora.examples.generated.Employee;
+ import org.apache.gora.examples.generated.WebPage;
+ import org.apache.gora.memory.store.MemStore;
+-import org.apache.gora.persistency.Persistent;
+ import org.apache.gora.persistency.impl.PersistentBase;
+ import org.apache.gora.query.Query;
+ import org.apache.gora.query.Result;
+@@ -37,6 +33,8 @@
+ import org.apache.gora.store.DataStoreTestUtil;
+ import org.apache.hadoop.conf.Configuration;
+ import org.junit.Test;
++import static org.junit.Assert.assertNotNull;
++import static org.junit.Assert.assertEquals;
+ 
+ /**
+  * Test case for {@link PersistentDatumReader}.
+@@ -53,8 +51,8 @@
+   }
+   
+   private void assertClone(PersistentBase persistent, PersistentBase cloned) {
+-    Assert.assertNotNull("cloned object is null", cloned);
+-    Assert.assertEquals("cloned object is not equal to original object", persistent, cloned);
++    assertNotNull("cloned object is null", cloned);
++    assertEquals("cloned object is not equal to original object", persistent, cloned);
+   }
+   
+   @Test
+@@ -101,6 +99,6 @@
+       testClone(page);
+       tested++;
+     }
+-    Assert.assertEquals(WebPageDataCreator.URLS.length, tested);
++    assertEquals(WebPageDataCreator.URLS.length, tested);
+   }
+ }
+Index: gora-core/src/test/java/org/apache/gora/avro/store/TestAvroStore.java
+===================================================================
+--- gora-core/src/test/java/org/apache/gora/avro/store/TestAvroStore.java	(revision 1497959)
++++ gora-core/src/test/java/org/apache/gora/avro/store/TestAvroStore.java	(working copy)
+@@ -24,8 +24,6 @@
+ 
+ import java.io.IOException;
+ 
+-import junit.framework.Assert;
+-
+ import org.apache.gora.avro.store.AvroStore.CodecType;
+ import org.apache.gora.examples.generated.Employee;
+ import org.apache.gora.examples.generated.WebPage;
+@@ -40,6 +38,7 @@
+ import org.junit.After;
+ import org.junit.Before;
+ import org.junit.Test;
++import static org.junit.Assert.assertEquals;
+ 
+ /**
+  * Test case for {@link AvroStore}.
+@@ -147,7 +146,7 @@
+       DataStoreTestUtil.assertWebPage(page, URL_INDEXES.get(page.getUrl().toString()));
+       i++;
+     }
+-    Assert.assertEquals(i, URLS.length);
++    assertEquals(i, URLS.length);
+   }
+ 
+ }
+Index: gora-core/src/test/java/org/apache/gora/mapreduce/MapReduceTestUtils.java
+===================================================================
+--- gora-core/src/test/java/org/apache/gora/mapreduce/MapReduceTestUtils.java	(revision 1497959)
++++ gora-core/src/test/java/org/apache/gora/mapreduce/MapReduceTestUtils.java	(working copy)
+@@ -32,7 +32,8 @@
+ import org.apache.gora.store.DataStore;
+ import org.apache.gora.store.impl.DataStoreBase;
+ import org.apache.hadoop.conf.Configuration;
+-import org.junit.Assert;
++import static org.junit.Assert.assertEquals;
++import static org.junit.Assert.assertNotNull;
+ 
+ public class MapReduceTestUtils {
+ 
+@@ -59,7 +60,7 @@
+     log.info("finished count query job");
+     
+     //assert results
+-    Assert.assertEquals(WebPageDataCreator.URLS.length, result);
++    assertEquals(WebPageDataCreator.URLS.length, result);
+   }
+  
+   public static void testWordCount(Configuration conf, DataStore<String,WebPage> inStore, DataStore<String,
+@@ -95,7 +96,7 @@
+   private static void assertTokenCount(DataStore<String, TokenDatum> outStore,
+       String token, int count) throws Exception {
+     TokenDatum datum = outStore.get(token, null);
+-    Assert.assertNotNull("token:" + token + " cannot be found in datastore", datum);
+-    Assert.assertEquals("count for token:" + token + " is wrong", count, datum.getCount());
++    assertNotNull("token:" + token + " cannot be found in datastore", datum);
++    assertEquals("count for token:" + token + " is wrong", count, datum.getCount());
+   }
+ }
+Index: gora-core/src/test/java/org/apache/gora/mapreduce/TestGoraInputFormat.java
+===================================================================
+--- gora-core/src/test/java/org/apache/gora/mapreduce/TestGoraInputFormat.java	(revision 1497959)
++++ gora-core/src/test/java/org/apache/gora/mapreduce/TestGoraInputFormat.java	(working copy)
+@@ -22,11 +22,7 @@
+ import java.util.Arrays;
+ import java.util.List;
+ 
+-import junit.framework.Assert;
+-
+ import org.apache.gora.examples.generated.Employee;
+-import org.apache.gora.mapreduce.GoraInputFormat;
+-import org.apache.gora.mapreduce.GoraInputSplit;
+ import org.apache.gora.mock.persistency.MockPersistent;
+ import org.apache.gora.mock.query.MockQuery;
+ import org.apache.gora.mock.store.MockDataStore;
+@@ -34,6 +30,7 @@
+ import org.apache.hadoop.mapreduce.InputSplit;
+ import org.apache.hadoop.mapreduce.Job;
+ import org.junit.Test;
++import static org.junit.Assert.assertTrue;
+ 
+ public class TestGoraInputFormat {
+ 
+@@ -60,11 +57,11 @@
+   public void testGetSplits() throws IOException, InterruptedException {
+     List<InputSplit> splits = getInputSplits();
+ 
+-    Assert.assertTrue(splits.size() > 0);
++    assertTrue(splits.size() > 0);
+ 
+     InputSplit split = splits.get(0);
+     PartitionQuery query = ((GoraInputSplit)split).getQuery();
+-    Assert.assertTrue(Arrays.equals(Employee._ALL_FIELDS, query.getFields()));
++    assertTrue(Arrays.equals(Employee._ALL_FIELDS, query.getFields()));
+   }
+ 
+ }
+\ No newline at end of file
+Index: gora-core/src/test/java/org/apache/gora/mapreduce/TestGoraInputSplit.java
+===================================================================
+--- gora-core/src/test/java/org/apache/gora/mapreduce/TestGoraInputSplit.java	(revision 1497959)
++++ gora-core/src/test/java/org/apache/gora/mapreduce/TestGoraInputSplit.java	(working copy)
+@@ -21,9 +21,6 @@
+ import java.io.IOException;
+ import java.util.List;
+ 
+-import junit.framework.Assert;
+-
+-import org.apache.gora.mapreduce.GoraInputSplit;
+ import org.apache.gora.mock.persistency.MockPersistent;
+ import org.apache.gora.mock.query.MockQuery;
+ import org.apache.gora.mock.store.MockDataStore;
+@@ -31,6 +28,7 @@
+ import org.apache.hadoop.conf.Configuration;
+ import org.apache.hadoop.io.TestWritable;
+ import org.junit.Test;
++import static org.junit.Assert.assertEquals;
+ 
+ /**
+  * Test case for {@link GoraInputSplit}.
+@@ -44,7 +42,7 @@
+     MockDataStore store = MockDataStore.get();
+     MockQuery query = store.newQuery();
+ 
+-    List<PartitionQuery<String, MockPersistent>> partitions = 
++    List<PartitionQuery<String, MockPersistent>> partitions =
+       store.getPartitions(query);
+     return partitions;
+   }
+@@ -54,11 +52,11 @@
+     List<PartitionQuery<String, MockPersistent>> partitions = 
+       getPartitions();
+ 
+-    int i=0;;
++    int i=0;
+     for(PartitionQuery<String, MockPersistent> partition : partitions) {
+       GoraInputSplit split = new GoraInputSplit(conf, partition);
+-      Assert.assertEquals(split.getLocations().length, 1);
+-      Assert.assertEquals(split.getLocations()[0], MockDataStore.LOCATIONS[i++]);
++      assertEquals(split.getLocations().length, 1);
++      assertEquals(split.getLocations()[0], MockDataStore.LOCATIONS[i++]);
+     }
+   }
+ 
+Index: gora-core/src/test/java/org/apache/gora/mapreduce/TestPersistentSerialization.java
+===================================================================
+--- gora-core/src/test/java/org/apache/gora/mapreduce/TestPersistentSerialization.java	(revision 1497959)
++++ gora-core/src/test/java/org/apache/gora/mapreduce/TestPersistentSerialization.java	(working copy)
+@@ -18,15 +18,10 @@
+ 
+ package org.apache.gora.mapreduce;
+ 
+-import junit.framework.Assert;
+-
+ import org.apache.avro.util.Utf8;
+ import org.apache.gora.examples.WebPageDataCreator;
+ import org.apache.gora.examples.generated.Employee;
+ import org.apache.gora.examples.generated.WebPage;
+-import org.apache.gora.mapreduce.PersistentDeserializer;
+-import org.apache.gora.mapreduce.PersistentSerialization;
+-import org.apache.gora.mapreduce.PersistentSerializer;
+ import org.apache.gora.memory.store.MemStore;
+ import org.apache.gora.query.Result;
+ import org.apache.gora.store.DataStoreFactory;
+@@ -34,6 +29,7 @@
+ import org.apache.gora.util.TestIOUtils;
+ import org.apache.hadoop.conf.Configuration;
+ import org.junit.Test;
++import static org.junit.Assert.assertEquals;
+ 
+ /** Test class for {@link PersistentSerialization}, {@link PersistentSerializer}
+  *  and {@link PersistentDeserializer}
+@@ -85,7 +81,7 @@
+       TestIOUtils.testSerializeDeserialize(page);
+       i++;
+     }
+-    Assert.assertEquals(WebPageDataCreator.URLS.length, i);
++    assertEquals(WebPageDataCreator.URLS.length, i);
+   }
+ 
+   @Test
+Index: gora-core/src/test/java/org/apache/gora/persistency/TestListGenericArray.java
+===================================================================
+--- gora-core/src/test/java/org/apache/gora/persistency/TestListGenericArray.java	(revision 1497959)
++++ gora-core/src/test/java/org/apache/gora/persistency/TestListGenericArray.java	(working copy)
+@@ -18,11 +18,9 @@
+ 
+ package org.apache.gora.persistency;
+ 
+-import org.apache.avro.Schema; 
+-import org.apache.avro.generic.GenericData;
++import org.apache.avro.Schema;
+ import org.apache.avro.util.Utf8;
+-import org.apache.gora.persistency.ListGenericArray; 
+-import org.junit.Assert;
++import static org.junit.Assert.assertFalse;
+ import org.junit.Test;
+ 
+ /**
+@@ -41,7 +39,7 @@
+     catch (StackOverflowError e) {
+       stackOverflowError = true;
+     }
+-    Assert.assertFalse(stackOverflowError);
++    assertFalse(stackOverflowError);
+   }
+   
+   @Test
+@@ -54,6 +52,6 @@
+     } catch (StackOverflowError e) {
+       stackOverflowError = true;
+     }
+-    Assert.assertFalse(stackOverflowError);
++    assertFalse(stackOverflowError);
+   }
+ }
+Index: gora-core/src/test/java/org/apache/gora/persistency/impl/TestPersistentBase.java
+===================================================================
+--- gora-core/src/test/java/org/apache/gora/persistency/impl/TestPersistentBase.java	(revision 1497959)
++++ gora-core/src/test/java/org/apache/gora/persistency/impl/TestPersistentBase.java	(working copy)
+@@ -28,7 +28,10 @@
+ import org.apache.gora.store.DataStoreFactory;
+ import org.apache.gora.store.DataStoreTestUtil;
+ import org.apache.hadoop.conf.Configuration;
+-import org.junit.Assert;
++import static org.junit.Assert.assertArrayEquals;
++import static org.junit.Assert.assertEquals;
++import static org.junit.Assert.assertNull;
++
+ import org.junit.Test;
+ 
+ /**
+@@ -40,7 +43,7 @@
+   public void testGetFields() {
+     WebPage page = new WebPage();
+     String[] fields = page.getFields();
+-    Assert.assertArrayEquals(WebPage._ALL_FIELDS, fields);
++    assertArrayEquals(WebPage._ALL_FIELDS, fields);
+   }
+   
+   @Test
+@@ -48,7 +51,7 @@
+     WebPage page = new WebPage();
+     for(int i=0; i<WebPage._ALL_FIELDS.length; i++) {
+       String field = page.getField(i);
+-      Assert.assertEquals(WebPage._ALL_FIELDS[i], field);
++      assertEquals(WebPage._ALL_FIELDS[i], field);
+     }
+   }
+   
+@@ -57,7 +60,7 @@
+     WebPage page = new WebPage();
+     for(int i=0; i<WebPage._ALL_FIELDS.length; i++) {
+       int index = page.getFieldIndex(WebPage._ALL_FIELDS[i]);
+-      Assert.assertEquals(i, index);
++      assertEquals(i, index);
+     }
+   }
+   
+@@ -66,12 +69,12 @@
+     WebPage page = new WebPage();
+     for(int i=0; i<WebPage._ALL_FIELDS.length; i++) {
+       int index = page.getFieldIndex(WebPage._ALL_FIELDS[i]);
+-      Assert.assertEquals(i, index);
++      assertEquals(i, index);
+     }
+     Employee employee = new Employee();
+     for(int i=0; i<Employee._ALL_FIELDS.length; i++) {
+       int index = employee.getFieldIndex(Employee._ALL_FIELDS[i]);
+-      Assert.assertEquals(i, index);
++      assertEquals(i, index);
+     }
+   }
+   
+@@ -87,10 +90,10 @@
+     
+     page.clear();
+     
+-    Assert.assertNull(page.getUrl());
+-    Assert.assertEquals(0, page.getParsedContent().size());
+-    Assert.assertEquals(0, page.getOutlinks().size());
+-    Assert.assertNull(page.getContent());
++    assertNull(page.getUrl());
++    assertEquals(0, page.getParsedContent().size());
++    assertEquals(0, page.getOutlinks().size());
++    assertNull(page.getContent());
+     
+     //set fields again
+     page.setUrl(new Utf8("http://bar.com"));
+@@ -116,6 +119,6 @@
+ 
+     Employee employee = DataStoreTestUtil.createEmployee(store);
+     
+-    Assert.assertEquals(employee, employee.clone());
++    assertEquals(employee, employee.clone());
+   }
+ }
+Index: gora-core/src/test/java/org/apache/gora/persistency/impl/TestStateManagerImpl.java
+===================================================================
+--- gora-core/src/test/java/org/apache/gora/persistency/impl/TestStateManagerImpl.java	(revision 1497959)
++++ gora-core/src/test/java/org/apache/gora/persistency/impl/TestStateManagerImpl.java	(working copy)
+@@ -20,14 +20,14 @@
+ 
+ import java.io.IOException;
+ 
+-import junit.framework.Assert;
+-
+ import org.apache.avro.util.Utf8;
+ import org.apache.gora.examples.generated.Employee;
+ import org.apache.gora.mock.persistency.MockPersistent;
+ import org.apache.gora.persistency.impl.StateManagerImpl;
+ import org.junit.Before;
+ import org.junit.Test;
++import static junit.framework.Assert.assertFalse;
++import static junit.framework.Assert.assertTrue;
+ 
+ /**
+  * Test case for {@link StateManagerImpl}
+@@ -45,71 +45,71 @@
+   
+   @Test
+   public void testDirty() {
+-    Assert.assertFalse(stateManager.isDirty(persistent));
++    assertFalse(stateManager.isDirty(persistent));
+     stateManager.setDirty(persistent);
+-    Assert.assertTrue(stateManager.isDirty(persistent));
++    assertTrue(stateManager.isDirty(persistent));
+   }
+   
+   @Test
+   public void testDirty2() {
+-    Assert.assertFalse(stateManager.isDirty(persistent, 0));
+-    Assert.assertFalse(stateManager.isDirty(persistent, 1));
++    assertFalse(stateManager.isDirty(persistent, 0));
++    assertFalse(stateManager.isDirty(persistent, 1));
+     stateManager.setDirty(persistent, 0);
+-    Assert.assertTrue(stateManager.isDirty(persistent, 0));
+-    Assert.assertFalse(stateManager.isDirty(persistent, 1));
++    assertTrue(stateManager.isDirty(persistent, 0));
++    assertFalse(stateManager.isDirty(persistent, 1));
+   }
+   
+   @Test
+   public void testClearDirty() {
+-    Assert.assertFalse(stateManager.isDirty(persistent));
++    assertFalse(stateManager.isDirty(persistent));
+     stateManager.setDirty(persistent, 0);
+     stateManager.clearDirty(persistent);
+-    Assert.assertFalse(this.stateManager.isDirty(persistent));
++    assertFalse(this.stateManager.isDirty(persistent));
+   }
+   
+   @Test
+   public void testReadable() throws IOException {
+-    Assert.assertFalse(stateManager.isReadable(persistent, 0));
+-    Assert.assertFalse(stateManager.isReadable(persistent, 1));
++    assertFalse(stateManager.isReadable(persistent, 0));
++    assertFalse(stateManager.isReadable(persistent, 1));
+     stateManager.setReadable(persistent, 0);
+-    Assert.assertTrue(stateManager.isReadable(persistent, 0));
+-    Assert.assertFalse(stateManager.isReadable(persistent, 1));
++    assertTrue(stateManager.isReadable(persistent, 0));
++    assertFalse(stateManager.isReadable(persistent, 1));
+   }
+ 
+   @Test
+   public void testReadable2() {
+     stateManager = new StateManagerImpl();
+     Employee employee = new Employee(stateManager);
+-    Assert.assertFalse(stateManager.isReadable(employee, 0));
+-    Assert.assertFalse(stateManager.isReadable(employee, 1));
++    assertFalse(stateManager.isReadable(employee, 0));
++    assertFalse(stateManager.isReadable(employee, 1));
+     employee.setName(new Utf8("foo"));
+-    Assert.assertTrue(stateManager.isReadable(employee, 0));
+-    Assert.assertFalse(stateManager.isReadable(employee, 1));
++    assertTrue(stateManager.isReadable(employee, 0));
++    assertFalse(stateManager.isReadable(employee, 1));
+   }
+   
+   @Test
+   public void testClearReadable() {
+     stateManager.setReadable(persistent, 0);
+     stateManager.clearReadable(persistent);
+-    Assert.assertFalse(stateManager.isReadable(persistent, 0));
++    assertFalse(stateManager.isReadable(persistent, 0));
+   }
+   
+   @Test
+   public void testIsNew() {
+     //newly created objects should be new
+-    Assert.assertTrue(persistent.isNew());
++    assertTrue(persistent.isNew());
+   }
+   
+   @Test
+   public void testNew() {
+     stateManager.setNew(persistent);
+-    Assert.assertTrue(persistent.isNew());
++    assertTrue(persistent.isNew());
+   }
+   
+   @Test
+   public void testClearNew() {
+     stateManager.clearNew(persistent);
+-    Assert.assertFalse(persistent.isNew());
++    assertFalse(persistent.isNew());
+   }
+   
+ }
+Index: gora-core/src/test/java/org/apache/gora/query/impl/TestQueryBase.java
+===================================================================
+--- gora-core/src/test/java/org/apache/gora/query/impl/TestQueryBase.java	(revision 1497959)
++++ gora-core/src/test/java/org/apache/gora/query/impl/TestQueryBase.java	(working copy)
+@@ -16,17 +16,15 @@
+  * limitations under the License.
+  */
+ 
+-
+ package org.apache.gora.query.impl;
+ 
+-import junit.framework.Assert;
+-
+ import org.apache.gora.mock.query.MockQuery;
+ import org.apache.gora.mock.store.MockDataStore;
+ import org.apache.gora.query.impl.QueryBase;
+ import org.apache.gora.util.TestIOUtils;
+ import org.junit.Before;
+ import org.junit.Test;
++import static org.junit.Assert.assertNotNull;
+ 
+ /**
+  * Test case for {@link QueryBase}.
+@@ -51,7 +49,7 @@
+     query.setKeyRange(START_KEY, END_KEY);
+     TestIOUtils.testSerializeDeserialize(query);
+     
+-    Assert.assertNotNull(query.getDataStore());
++    assertNotNull(query.getDataStore());
+   }
+   
+   @Test
+Index: gora-core/src/test/java/org/apache/gora/store/DataStoreTestBase.java
+===================================================================
+--- gora-core/src/test/java/org/apache/gora/store/DataStoreTestBase.java	(revision 1497959)
++++ gora-core/src/test/java/org/apache/gora/store/DataStoreTestBase.java	(working copy)
+@@ -21,8 +21,6 @@
+ import java.io.IOException;
+ import java.nio.ByteBuffer;
+ 
+-import junit.framework.Assert;
+-
+ import org.apache.avro.util.Utf8;
+ import org.slf4j.Logger;
+ import org.slf4j.LoggerFactory;
+@@ -30,12 +28,13 @@
+ import org.apache.gora.examples.generated.Employee;
+ import org.apache.gora.examples.generated.Metadata;
+ import org.apache.gora.examples.generated.WebPage;
+-import org.apache.gora.store.DataStore;
+ import org.junit.After;
+ import org.junit.AfterClass;
+ import org.junit.Before;
+ import org.junit.BeforeClass;
+ import org.junit.Test;
++import static org.junit.Assert.assertEquals;
++import static org.junit.Assert.assertNotNull;
+ 
+ /**
+  * A base class for {@link DataStore} tests. This is just a convenience
+@@ -57,8 +56,8 @@
+ 
+   @Deprecated
+   protected abstract DataStore<String,WebPage> createWebPageDataStore() throws IOException;
+-  
+ 
++
+   /** junit annoyingly forces BeforeClass to be static, so this method
+    * should be called from a static block
+    */
+@@ -67,7 +66,7 @@
+   }
+ 
+   private static boolean setUpClassCalled = false;
+-  
++
+   @BeforeClass
+   public static void setUpClass() throws Exception {
+     if(testDriver != null && !setUpClassCalled) {
+@@ -88,12 +87,12 @@
+   @Before
+   public void setUp() throws Exception {
+     //There is an issue in JUnit 4 tests in Eclipse where TestSqlStore static
+-    //methods are not called BEFORE setUpClass. I think this is a bug in 
++    //methods are not called BEFORE setUpClass. I think this is a bug in
+     //JUnitRunner in Eclipse. Below is a workaround for that problem.
+     if(!setUpClassCalled) {
+-    	setUpClass();  
++      setUpClass();
+     }
+-    
++
+     log.info("setting up test");
+     if(testDriver != null) {
+       employeeStore = testDriver.createDataStore(String.class, Employee.class);
+@@ -131,7 +130,9 @@
+     assertSchemaExists("Employee");
+   }
+ 
++
+   // Override this to assert that schema is created correctly
++
+   public void assertSchemaExists(String schemaName) throws Exception {
+   }
+ 
+@@ -184,7 +185,7 @@
+ 
+     webPageStore.createSchema();
+     WebPage page = webPageStore.newPersistent();
+-    Metadata metadata = new Metadata();  
++    Metadata metadata = new Metadata();
+     metadata.setVersion(1);
+     metadata.putToData(new Utf8("foo"), new Utf8("baz"));
+ 
+@@ -196,9 +197,9 @@
+ 
+     page = webPageStore.get(revUrl);
+     metadata = page.getMetadata();
+-    Assert.assertNotNull(metadata);
+-    Assert.assertEquals(1, metadata.getVersion());
+-    Assert.assertEquals(new Utf8("baz"), metadata.getData().get(new Utf8("foo")));
++    assertNotNull(metadata);
++    assertEquals(1, metadata.getVersion());
++    assertEquals(new Utf8("baz"), metadata.getData().get(new Utf8("foo")));
+   }
+ 
+   @Test
+@@ -301,7 +302,7 @@
+     log.info("test method: testGetDoubleRecursive") ;
+     DataStoreTestUtil.testGetEmployeeDoubleRecursive(employeeStore) ;
+   }
+-  
++
+   @Test
+   /**
+    * Tests put and get a record with a nested record (not recursive)
+@@ -313,7 +314,7 @@
+     log.info("test method: testGetNested") ;
+     DataStoreTestUtil.testGetEmployeeNested(employeeStore) ;
+   }
+-  
++
+   @Test
+   /**
+    * Tests put and get a record with a 3 types union, and
+@@ -325,7 +326,7 @@
+     log.info("test method: testGet3UnionField") ;
+     DataStoreTestUtil.testGetEmployee3UnionField(employeeStore) ;
+   }
+-  
++
+   @Test
+   public void testGetWithFields() throws IOException, Exception {
+     log.info("test method: testGetWithFields");
+Index: gora-core/src/test/java/org/apache/gora/store/DataStoreTestUtil.java
+===================================================================
+--- gora-core/src/test/java/org/apache/gora/store/DataStoreTestUtil.java	(revision 1497959)
++++ gora-core/src/test/java/org/apache/gora/store/DataStoreTestUtil.java	(working copy)
+@@ -36,7 +36,11 @@
+ import java.util.Map;
+ import java.util.Set;
+ 
+-import junit.framework.Assert;
++import static org.junit.Assert.assertEquals;
++import static org.junit.Assert.assertNotNull;
++import static org.junit.Assert.assertFalse;
++import static org.junit.Assert.assertTrue;
++import static org.junit.Assert.assertNull;
+ 
+ import org.apache.avro.generic.GenericArray;
+ import org.apache.avro.util.Utf8;
+@@ -44,15 +48,14 @@
+ import org.apache.gora.examples.generated.Employee;
+ import org.apache.gora.examples.generated.Metadata;
+ import org.apache.gora.examples.generated.WebPage;
+-import org.apache.gora.persistency.BeanFactory;
+ import org.apache.gora.persistency.Persistent;
+ import org.apache.gora.persistency.impl.BeanFactoryImpl;
+ import org.apache.gora.query.PartitionQuery;
+ import org.apache.gora.query.Query;
+ import org.apache.gora.query.Result;
+-import org.apache.gora.store.DataStore;
+ import org.apache.gora.util.ByteUtils;
+ import org.apache.gora.util.StringUtils;
++import org.junit.Test;
+ 
+ /**
+  * Test utilities for DataStores. This utility class provides everything
+@@ -76,11 +79,11 @@
+     T obj1 = dataStore.newPersistent();
+     T obj2 = dataStore.newPersistent();
+ 
+-    Assert.assertEquals(dataStore.getPersistentClass(),
++    assertEquals(dataStore.getPersistentClass(),
+         obj1.getClass());
+-    Assert.assertNotNull(obj1);
+-    Assert.assertNotNull(obj2);
+-    Assert.assertFalse( obj1 == obj2 );
++    assertNotNull(obj1);
++    assertNotNull(obj2);
++    assertFalse( obj1 == obj2 );
+   }
+ 
+   public static <K> Employee createEmployee(
+@@ -142,10 +145,10 @@
+       DataStore<K, T> dataStore) throws IOException, Exception {
+     dataStore.createSchema();
+ 
+-    Assert.assertTrue(dataStore.schemaExists());
++    assertTrue(dataStore.schemaExists());
+ 
+     dataStore.deleteSchema();
+-    Assert.assertFalse(dataStore.schemaExists());
++    assertFalse(dataStore.schemaExists());
+   }
+ 
+   public static void testGetEmployee(DataStore<String, Employee> dataStore)
+@@ -158,7 +161,7 @@
+ 
+     Employee after = dataStore.get(ssn, Employee._ALL_FIELDS);
+ 
+-    Assert.assertEquals(employee, after);
++    assertEquals(employee, after);
+   }
+ 
+ 
+@@ -173,8 +176,8 @@
+     dataStore.put(ssn, employee);
+     dataStore.flush();
+     Employee after = dataStore.get(ssn, Employee._ALL_FIELDS);
+-    Assert.assertEquals(employee, after);
+-    Assert.assertEquals(boss, after.getBoss()) ;
++    assertEquals(employee, after);
++    assertEquals(boss, after.getBoss()) ;
+   }
+ 
+   public static void testGetEmployeeDoubleRecursive(DataStore<String, Employee> dataStore)
+@@ -191,9 +194,9 @@
+       dataStore.put(ssn, employee);
+       dataStore.flush();
+       Employee after = dataStore.get(ssn, Employee._ALL_FIELDS);
+-      Assert.assertEquals(employee, after);
+-      Assert.assertEquals(boss, after.getBoss()) ;
+-      Assert.assertEquals(uberBoss, ((Employee)after.getBoss()).getBoss()) ;
++      assertEquals(employee, after);
++      assertEquals(boss, after.getBoss()) ;
++      assertEquals(uberBoss, ((Employee)after.getBoss()).getBoss()) ;
+     }
+   
+   public static void testGetEmployeeNested(DataStore<String, Employee> dataStore)
+@@ -213,8 +216,8 @@
+     dataStore.put(ssn, employee);
+     dataStore.flush();
+     Employee after = dataStore.get(ssn, Employee._ALL_FIELDS);
+-    Assert.assertEquals(employee, after);
+-    Assert.assertEquals(webpage, after.getWebpage()) ;
++    assertEquals(employee, after);
++    assertEquals(webpage, after.getWebpage()) ;
+   }
+   
+   public static void testGetEmployee3UnionField(DataStore<String, Employee> dataStore)
+@@ -227,14 +230,14 @@
+     dataStore.put(ssn, employee);
+     dataStore.flush();
+     Employee after = dataStore.get(ssn, Employee._ALL_FIELDS);
+-    Assert.assertEquals(employee, after);
+-    Assert.assertEquals("Real boss", ((Utf8)after.getBoss()).toString()) ;
++    assertEquals(employee, after);
++    assertEquals("Real boss", ((Utf8)after.getBoss()).toString()) ;
+   }
+   
+   public static void testGetEmployeeNonExisting(DataStore<String, Employee> dataStore)
+     throws IOException, Exception {
+     Employee employee = dataStore.get("_NON_EXISTING_SSN_FOR_EMPLOYEE_");
+-    Assert.assertNull(employee);
++    assertNull(employee);
+   }
+ 
+   public static void testGetEmployeeWithFields(DataStore<String, Employee> dataStore)
+@@ -262,7 +265,7 @@
+         expected.put(index, employee.get(index));
+       }
+ 
+-      Assert.assertEquals(expected, after);        
++      assertEquals(expected, after);        
+     }
+   }
+ 
+@@ -300,7 +303,7 @@
+     dataStore.flush();
+ 
+     employee = dataStore.get(Long.toString(ssn + 1));
+-    Assert.assertNull(employee);
++    assertNull(employee);
+   }
+ 
+   public static void testUpdateEmployee(DataStore<String, Employee> dataStore)
+@@ -334,9 +337,9 @@
+     for (int i = 0; i < 1; i++) {
+       String key = Long.toString(ssn + i);
+       Employee employee = dataStore.get(key);
+-      Assert.assertEquals(now - 18L * YEAR_IN_MS, employee.getDateOfBirth());
+-      Assert.assertEquals("John Doe " + (i + 5), employee.getName().toString());
+-      Assert.assertEquals(120000, employee.getSalary());
++      assertEquals(now - 18L * YEAR_IN_MS, employee.getDateOfBirth());
++      assertEquals("John Doe " + (i + 5), employee.getName().toString());
++      assertEquals(120000, employee.getSalary());
+     }
+   }
+ 
+@@ -384,21 +387,21 @@
+ 
+     for (int i = 0; i < urls.length; i++) {
+       WebPage webPage = dataStore.get(urls[i]);
+-      Assert.assertEquals(content + i, ByteUtils.toString( toByteArray(webPage.getContent()) ));
+-      Assert.assertEquals(10, webPage.getParsedContent().size());
++      assertEquals(content + i, ByteUtils.toString( toByteArray(webPage.getContent()) ));
++      assertEquals(10, webPage.getParsedContent().size());
+       int j = 0;
+       for (Utf8 pc : webPage.getParsedContent()) {
+-        Assert.assertEquals(parsedContent + i + "," + j, pc.toString());
++        assertEquals(parsedContent + i + "," + j, pc.toString());
+         j++;
+       }
+       int count = 0;
+       for (j = 1; j < urls.length; j += 2) {
+         Utf8 link = webPage.getOutlinks().get(new Utf8(anchor + j));
+-        Assert.assertNotNull(link);
+-        Assert.assertEquals(urls[j], link.toString());
++        assertNotNull(link);
++        assertEquals(urls[j], link.toString());
+         count++;
+       }
+-      Assert.assertEquals(count, webPage.getOutlinks().size());
++      assertEquals(count, webPage.getOutlinks().size());
+     }
+ 
+     for (int i = 0; i < urls.length; i++) {
+@@ -416,49 +419,49 @@
+       int count = 0;
+       for (int j = 0; j < urls.length; j++) {
+         Utf8 link = webPage.getOutlinks().get(new Utf8(anchor + j));
+-        Assert.assertNotNull(link);
+-        Assert.assertEquals(urls[j], link.toString());
++        assertNotNull(link);
++        assertEquals(urls[j], link.toString());
+         count++;
+       }
+     }
+   }
+ 
+   public static void assertWebPage(WebPage page, int i) throws Exception{
+-    Assert.assertNotNull(page);
++    assertNotNull(page);
+ 
+-    Assert.assertEquals(URLS[i], page.getUrl().toString());
++    assertEquals(URLS[i], page.getUrl().toString());
+     // 'content' is optional
+     if (page.getContent() != null) {
+-      Assert.assertTrue("content error:" + new String( toByteArray(page.getContent()) ) +
++      assertTrue("content error:" + new String( toByteArray(page.getContent()) ) +
+         " actual=" + CONTENTS[i] + " i=" + i
+         , Arrays.equals( toByteArray(page.getContent() )
+         , CONTENTS[i].getBytes()));
+       GenericArray<Utf8> parsedContent = page.getParsedContent();
+-      Assert.assertNotNull(parsedContent);
+-      Assert.assertTrue(parsedContent.size() > 0);
++      assertNotNull(parsedContent);
++      assertTrue(parsedContent.size() > 0);
+     
+       int j=0;
+       String[] tokens = CONTENTS[i].split(" ");
+       for(Utf8 token : parsedContent) {
+-        Assert.assertEquals(tokens[j++], token.toString());
++        assertEquals(tokens[j++], token.toString());
+       }
+     } else {
+       // when page.getContent() is null
+-      Assert.assertTrue(CONTENTS[i] == null) ;
++      assertTrue(CONTENTS[i] == null) ;
+       GenericArray<Utf8> parsedContent = page.getParsedContent();
+-      Assert.assertNotNull(parsedContent);
+-      Assert.assertTrue(parsedContent.size() == 0);
++      assertNotNull(parsedContent);
++      assertTrue(parsedContent.size() == 0);
+     }
+ 
+     if(LINKS[i].length > 0) {
+-      Assert.assertNotNull(page.getOutlinks());
+-      Assert.assertTrue(page.getOutlinks().size() > 0);
++      assertNotNull(page.getOutlinks());
++      assertTrue(page.getOutlinks().size() > 0);
+       for(int k=0; k<LINKS[i].length; k++) {
+-        Assert.assertEquals(ANCHORS[i][k],
++        assertEquals(ANCHORS[i][k],
+           page.getFromOutlinks(new Utf8(URLS[LINKS[i][k]])).toString());
+       }
+     } else {
+-      Assert.assertTrue(page.getOutlinks() == null || page.getOutlinks().isEmpty());
++      assertTrue(page.getOutlinks() == null || page.getOutlinks().isEmpty());
+     }
+   }
+ 
+@@ -491,10 +494,10 @@
+       query.setFields(fields);
+       query.setKey(URLS[i]);
+       Result<String, WebPage> result = query.execute();
+-      Assert.assertTrue(result.next());
++      assertTrue(result.next());
+       WebPage page = result.get();
+       assertWebPage(page, i);
+-      Assert.assertFalse(result.next());
++      assertFalse(result.next());
+     }
+   }
+ 
+@@ -539,7 +542,7 @@
+ 
+         int expectedLength = (setEndKeys ? j+1: sortedUrls.size()) -
+                              (setStartKeys ? i: 0);
+-        Assert.assertEquals(expectedLength, r);
++        assertEquals(expectedLength, r);
+         if(!setEndKeys)
+           break;
+       }
+@@ -597,7 +600,7 @@
+       actualNumResults++;
+     }
+     result.close();
+-    Assert.assertEquals(numResults, actualNumResults);
++    assertEquals(numResults, actualNumResults);
+   }
+ 
+   public static void testGetPartitions(DataStore<String, WebPage> store)
+@@ -610,11 +613,11 @@
+       , Query<String, WebPage> query) throws IOException, Exception {
+     List<PartitionQuery<String, WebPage>> partitions = store.getPartitions(query);
+ 
+-    Assert.assertNotNull(partitions);
+-    Assert.assertTrue(partitions.size() > 0);
++    assertNotNull(partitions);
++    assertTrue(partitions.size() > 0);
+ 
+     for(PartitionQuery<String, WebPage> partition:partitions) {
+-      Assert.assertNotNull(partition);
++      assertNotNull(partition);
+     }
+ 
+     assertPartitions(store, query, partitions);
+@@ -630,43 +633,43 @@
+ 
+     //execute query and count results
+     Result<String, WebPage> result = store.execute(query);
+-    Assert.assertNotNull(result);
++    assertNotNull(result);
+ 
+     while(result.next()) {
+-      Assert.assertNotNull(result.getKey());
+-      Assert.assertNotNull(result.get());
++      assertNotNull(result.getKey());
++      assertNotNull(result.get());
+       results.put(result.getKey(), result.get().hashCode()); //keys are not reused, so this is safe
+       count++;
+     }
+     result.close();
+ 
+-    Assert.assertTrue(count > 0); //assert that results is not empty
+-    Assert.assertEquals(count, results.size()); //assert that keys are unique
++    assertTrue(count > 0); //assert that results is not empty
++    assertEquals(count, results.size()); //assert that keys are unique
+ 
+     for(PartitionQuery<String, WebPage> partition:partitions) {
+-      Assert.assertNotNull(partition);
++      assertNotNull(partition);
+ 
+       result = store.execute(partition);
+-      Assert.assertNotNull(result);
++      assertNotNull(result);
+ 
+       while(result.next()) {
+-        Assert.assertNotNull(result.getKey());
+-        Assert.assertNotNull(result.get());
++        assertNotNull(result.getKey());
++        assertNotNull(result.get());
+         partitionResults.put(result.getKey(), result.get().hashCode());
+         partitionsCount++;
+       }
+       result.close();
+ 
+-      Assert.assertEquals(partitionsCount, partitionResults.size()); //assert that keys are unique
++      assertEquals(partitionsCount, partitionResults.size()); //assert that keys are unique
+     }
+ 
+-    Assert.assertTrue(partitionsCount > 0);
+-    Assert.assertEquals(count, partitionsCount);
++    assertTrue(partitionsCount > 0);
++    assertEquals(count, partitionsCount);
+ 
+     for(Map.Entry<String, Integer> r : results.entrySet()) {
+       Integer p = partitionResults.get(r.getKey());
+-      Assert.assertNotNull(p);
+-      Assert.assertEquals(r.getValue(), p);
++      assertNotNull(p);
++      assertEquals(r.getValue(), p);
+     }
+   }
+ 
+@@ -676,11 +679,11 @@
+ 
+     int deletedSoFar = 0;
+     for(String url : URLS) {
+-      Assert.assertTrue(store.delete(url));
++      assertTrue(store.delete(url));
+       store.flush();
+ 
+       //assert that it is actually deleted
+-      Assert.assertNull(store.get(url));
++      assertNull(store.get(url));
+ 
+       //assert that other records are not deleted
+       assertNumResults(store.newQuery(), URLS.length - ++deletedSoFar);
+@@ -765,17 +768,17 @@
+     //assert that data is deleted
+     for (int i = 0; i < SORTED_URLS.length; i++) {
+       WebPage page = store.get(SORTED_URLS[i]);
+-      Assert.assertNotNull(page);
++      assertNotNull(page);
+ 
+-      Assert.assertNotNull(page.getUrl());
+-      Assert.assertEquals(page.getUrl().toString(), SORTED_URLS[i]);
+-      Assert.assertEquals(0, page.getOutlinks().size());
+-      Assert.assertEquals(0, page.getParsedContent().size());
++      assertNotNull(page.getUrl());
++      assertEquals(page.getUrl().toString(), SORTED_URLS[i]);
++      assertEquals(0, page.getOutlinks().size());
++      assertEquals(0, page.getParsedContent().size());
+       if(page.getContent() != null) {
+         System.out.println("url:" + page.getUrl().toString());
+         System.out.println( "limit:" + page.getContent().limit());
+       } else {
+-        Assert.assertNull(page.getContent());
++        assertNull(page.getContent());
+       }
+     }
+ 
+@@ -801,18 +804,18 @@
+     //assert that data is deleted
+     for (int i = 0; i < URLS.length; i++) {
+       WebPage page = store.get(URLS[i]);
+-      Assert.assertNotNull(page);
++      assertNotNull(page);
+       if( URLS[i].compareTo(startKey) < 0 || URLS[i].compareTo(endKey) >= 0) {
+         //not deleted
+         assertWebPage(page, i);
+       } else {
+         //deleted
+-        Assert.assertNull(page.getUrl());
+-        Assert.assertNotNull(page.getOutlinks());
+-        Assert.assertNotNull(page.getParsedContent());
+-        Assert.assertNotNull(page.getContent());
+-        Assert.assertTrue(page.getOutlinks().size() > 0);
+-        Assert.assertTrue(page.getParsedContent().size() > 0);
++        assertNull(page.getUrl());
++        assertNotNull(page.getOutlinks());
++        assertNotNull(page.getParsedContent());
++        assertNotNull(page.getContent());
++        assertTrue(page.getOutlinks().size() > 0);
++        assertTrue(page.getParsedContent().size() > 0);
+       }
+     }
+ 
+Index: gora-core/src/test/java/org/apache/gora/store/TestDataStoreFactory.java
+===================================================================
+--- gora-core/src/test/java/org/apache/gora/store/TestDataStoreFactory.java	(revision 1497959)
++++ gora-core/src/test/java/org/apache/gora/store/TestDataStoreFactory.java	(working copy)
+@@ -20,7 +20,9 @@
+ 
+ import java.util.Properties;
+ 
+-import junit.framework.Assert;
++import static junit.framework.Assert.assertNotNull;
++import static junit.framework.Assert.assertEquals;
++import static junit.framework.Assert.assertNotSame;
+ 
+ import org.apache.gora.avro.store.DataFileAvroStore;
+ import org.apache.gora.mock.persistency.MockPersistent;
+@@ -42,23 +44,23 @@
+   public void testGetDataStore() throws GoraException {
+     DataStore<?,?> dataStore = DataStoreFactory.getDataStore("org.apache.gora.mock.store.MockDataStore"
+         , String.class, MockPersistent.class, conf);
+-    Assert.assertNotNull(dataStore);
++    assertNotNull(dataStore);
+   }
+   
+   @Test
+   public void testGetClasses() throws GoraException {
+     DataStore<?,?> dataStore = DataStoreFactory.getDataStore("org.apache.gora.mock.store.MockDataStore"
+         , String.class, MockPersistent.class, conf);
+-    Assert.assertNotNull(dataStore);
+-    Assert.assertEquals(String.class, dataStore.getKeyClass());
+-    Assert.assertEquals(MockPersistent.class, dataStore.getPersistentClass());
++    assertNotNull(dataStore);
++    assertEquals(String.class, dataStore.getKeyClass());
++    assertEquals(MockPersistent.class, dataStore.getPersistentClass());
+   }
+   
+   @Test
+   public void testGetDataStore2() throws GoraException {
+     DataStore<?,?> dataStore = DataStoreFactory.getDataStore(MockDataStore.class
+         , String.class, MockPersistent.class, conf);
+-    Assert.assertNotNull(dataStore);
++    assertNotNull(dataStore);
+   }
+   
+   @Test
+@@ -70,8 +72,8 @@
+     DataStore<?,?> dataStore3 = DataStoreFactory.getDataStore("org.apache.gora.mock.store.MockDataStore"
+         , String.class, MockPersistent.class, conf);
+     
+-    Assert.assertNotSame(dataStore1, dataStore2);
+-    Assert.assertNotSame(dataStore1, dataStore3);
++    assertNotSame(dataStore1, dataStore2);
++    assertNotSame(dataStore1, dataStore3);
+   }
+   
+   @Test
+@@ -79,8 +81,8 @@
+     //indirect testing
+     DataStore<?,?> dataStore = DataStoreFactory.getDataStore(String.class,
+             MockPersistent.class, conf);
+-    Assert.assertNotNull(dataStore);
+-    Assert.assertEquals(MockDataStore.class, dataStore.getClass());
++    assertNotNull(dataStore);
++    assertEquals(MockDataStore.class, dataStore.getClass());
+   }
+   
+   @Test
+@@ -91,15 +93,15 @@
+     
+     String fooValue = DataStoreFactory.findProperty(properties, store
+         , "foo_property", "foo_default");
+-    Assert.assertEquals("foo_value", fooValue);
++    assertEquals("foo_value", fooValue);
+     
+     String bazValue = DataStoreFactory.findProperty(properties, store
+         , "baz_property", "baz_default");
+-    Assert.assertEquals("baz_value", bazValue);
++    assertEquals("baz_value", bazValue);
+     
+     String barValue = DataStoreFactory.findProperty(properties, store
+         , "bar_property", "bar_default");
+-    Assert.assertEquals("bar_value", barValue);
++    assertEquals("bar_value", barValue);
+   }
+   
+ }
+Index: gora-core/src/test/java/org/apache/gora/store/WSDataStoreTestBase.java
+===================================================================
+--- gora-core/src/test/java/org/apache/gora/store/WSDataStoreTestBase.java	(revision 1497959)
++++ gora-core/src/test/java/org/apache/gora/store/WSDataStoreTestBase.java	(working copy)
+@@ -20,18 +20,18 @@
+ 
+ import java.io.IOException;
+ 
+-import junit.framework.Assert;
++import org.junit.BeforeClass;
++import org.junit.Before;
++import org.junit.AfterClass;
++import org.junit.After;
++import org.junit.Test;
++import org.junit.Ignore;
++import static org.junit.Assert.assertTrue;
+ 
+ import org.slf4j.Logger;
+ import org.slf4j.LoggerFactory;
+ import org.apache.gora.GoraTestDriver;
+ import org.apache.gora.persistency.Persistent;
+-import org.apache.gora.store.DataStore;
+-import org.junit.After;
+-import org.junit.AfterClass;
+-import org.junit.Before;
+-import org.junit.BeforeClass;
+-import org.junit.Test;
+ 
+ /**
+  * A base class for {@link DataStore} tests. This is just a convenience
+@@ -148,14 +148,15 @@
+     log.info("test method: testDeleteSchema");
+     assertDeleteSchema();
+   }
+-  
++
++
+   public void assertDeleteSchema(){
+   }
+ 
+   @Test
+   public void testSchemaExists() throws Exception {
+     log.info("test method: testSchemaExists");
+-    Assert.assertTrue(dataStore.schemaExists());
++    assertTrue(dataStore.schemaExists());
+   }
+ 
+   @Test
+@@ -164,6 +165,7 @@
+     assertPut();
+   }
+ 
++
+   public void assertPut() throws IOException {
+   }
+ 
+@@ -179,6 +181,7 @@
+     assertPutArray();
+   }
+ 
++
+   public void assertPutArray() throws IOException {
+   }
+ 
+@@ -190,6 +193,7 @@
+     assertPutBytes(contentBytes);
+   }
+ 
++  @Ignore
+   public void assertPutBytes(byte[] contentBytes) throws IOException {
+   }
+ 
+@@ -199,6 +203,7 @@
+     assertPutMap();
+   }
+ 
++  @Ignore
+   public void assertPutMap() throws IOException {
+   }
+ 
+@@ -208,9 +213,11 @@
+     assertTestUpdateDataStore();
+   }
+ 
++  @Ignore
+   public void assertTestUpdateDataStore(){
+   }
+-  
++
++  @Ignore
+   @Test
+   public void testEmptyUpdate() throws IOException, Exception {
+   }
+@@ -220,7 +227,8 @@
+     log.info("test method: testGet");
+     assertTestGetDataStore();
+   }
+-  
++
++  @Ignore
+   public void assertTestGetDataStore() throws IOException {
+   }
+   
+@@ -234,7 +242,8 @@
+     log.info("test method: testQuery");
+     assertTestQueryDataStore();
+   }
+- 
++
++  @Ignore
+   public void assertTestQueryDataStore() throws IOException {
+   }
+ 
+@@ -254,6 +263,7 @@
+     assertTestQueryKeyRange();
+   }
+ 
++  @Ignore
+   public void assertTestQueryKeyRange(){}
+   
+   @Test
+@@ -261,6 +271,8 @@
+     log.info("test method: testDelete");
+     assertTestDeleteDataStore();
+   }
++
++  @Ignore
+   public void assertTestDeleteDataStore(){}
+   
+   @Test
+@@ -268,6 +280,8 @@
+     log.info("test method: testDeleteByQuery");
+     assertTestDeleteByQueryDataStore();
+   }
++
++  @Ignore
+   public void assertTestDeleteByQueryDataStore(){
+   }
+   
+Index: gora-core/src/test/java/org/apache/gora/util/TestIOUtils.java
+===================================================================
+--- gora-core/src/test/java/org/apache/gora/util/TestIOUtils.java	(revision 1497959)
++++ gora-core/src/test/java/org/apache/gora/util/TestIOUtils.java	(working copy)
+@@ -27,20 +27,18 @@
+ import java.io.IOException;
+ import java.util.Arrays;
+ 
+-import junit.framework.Assert;
+-
+ import org.apache.avro.ipc.ByteBufferInputStream;
+ import org.apache.avro.ipc.ByteBufferOutputStream;
+ import org.slf4j.Logger;
+ import org.slf4j.LoggerFactory;
+ import org.apache.gora.mapreduce.GoraMapReduceUtils;
+-import org.apache.gora.util.IOUtils;
+ import org.apache.hadoop.conf.Configuration;
+ import org.apache.hadoop.io.DataInputBuffer;
+ import org.apache.hadoop.io.DataOutputBuffer;
+ import org.apache.hadoop.io.Text;
+ import org.apache.hadoop.io.Writable;
+ import org.junit.Test;
++import static org.junit.Assert.assertEquals;
+ 
+ /**
+  * Test case for {@link IOUtils} class.
+@@ -122,13 +120,13 @@
+         log.info("Before: " + before);
+         log.info("After : " + after);
+         
+-        Assert.assertEquals(before, after);
++        assertEquals(before, after);
+       }
+       
+       //assert that the end of input is reached
+       try {
+         long skipped = dis.skip(1);
+-        Assert.assertEquals(0, skipped);
++        assertEquals(0, skipped);
+       }catch (EOFException expected) {
+         //either should throw exception or return 0 as skipped
+       }
+@@ -204,10 +202,10 @@
+     boolean[] ret = IOUtils.readNullFieldsInfo(in);
+ 
+     //assert
+-    Assert.assertEquals(values.length, ret.length);
++    assertEquals(values.length, ret.length);
+ 
+     for(int i=0; i<values.length; i++) {
+-      Assert.assertEquals( values[i] == null , ret[i]);
++      assertEquals( values[i] == null , ret[i]);
+     }
+   }
+   
+@@ -238,9 +236,9 @@
+   }
+   
+   public void assertByteArrayEquals(byte[] expected, byte[] actual) {
+-    Assert.assertEquals("Array lengths do not match", expected.length, actual.length);
++    assertEquals("Array lengths do not match", expected.length, actual.length);
+     for(int j=0; j<expected.length; j++) {
+-      Assert.assertEquals("bytes at position "+j+" do not match", expected[j], actual[j]);
++      assertEquals("bytes at position "+j+" do not match", expected[j], actual[j]);
+     }
+   }
+ }
+Index: gora-core/src/test/java/org/apache/gora/util/TestWritableUtils.java
+===================================================================
+--- gora-core/src/test/java/org/apache/gora/util/TestWritableUtils.java	(revision 1497959)
++++ gora-core/src/test/java/org/apache/gora/util/TestWritableUtils.java	(working copy)
+@@ -26,7 +26,7 @@
+ import java.io.DataOutputStream;
+ import java.util.Properties;
+ 
+-import org.junit.Assert;
++import static org.junit.Assert.assertEquals;
+ import org.junit.Test;
+ 
+ /**
+@@ -47,7 +47,7 @@
+     
+     Properties propsRead = WritableUtils.readProperties(in);
+     
+-    Assert.assertEquals(propsRead.get("keyBlah"), props.get("keyBlah"));
+-    Assert.assertEquals(propsRead.get("keyBlah2"), props.get("keyBlah2"));
++    assertEquals(propsRead.get("keyBlah"), props.get("keyBlah"));
++    assertEquals(propsRead.get("keyBlah2"), props.get("keyBlah2"));
+   }
+ }
+Index: gora-hbase/src/test/java/org/apache/gora/hbase/store/TestHBaseStore.java
+===================================================================
+--- gora-hbase/src/test/java/org/apache/gora/hbase/store/TestHBaseStore.java	(revision 1497959)
++++ gora-hbase/src/test/java/org/apache/gora/hbase/store/TestHBaseStore.java	(working copy)
+@@ -18,31 +18,30 @@
+ 
+ package org.apache.gora.hbase.store;
+ 
+-import java.io.IOException;
+-import java.nio.ByteBuffer;
+-import java.util.Arrays;
+-import java.util.Properties;
+-
+-import junit.framework.Assert;
+-
+ import org.apache.avro.util.Utf8;
+-import org.apache.commons.lang.ArrayUtils;
+-import org.apache.gora.examples.WebPageDataCreator;
+ import org.apache.gora.examples.generated.Employee;
+ import org.apache.gora.examples.generated.WebPage;
+ import org.apache.gora.hbase.GoraHBaseTestDriver;
+ import org.apache.gora.store.DataStore;
+ import org.apache.gora.store.DataStoreFactory;
+ import org.apache.gora.store.DataStoreTestBase;
+-import org.apache.gora.store.DataStoreTestUtil;
+-import org.apache.gora.util.GoraException;
+ import org.apache.hadoop.conf.Configuration;
+ import org.apache.hadoop.hbase.client.Get;
+ import org.apache.hadoop.hbase.client.HBaseAdmin;
+ import org.apache.hadoop.hbase.client.HTable;
+ import org.apache.hadoop.hbase.util.Bytes;
++import org.junit.Ignore;
+ import org.junit.Test;
+ 
++import java.io.IOException;
++import java.nio.ByteBuffer;
++import java.util.Arrays;
++
++import static org.junit.Assert.assertEquals;
++import static org.junit.Assert.assertTrue;
++import static org.junit.Assert.assertNull;
++import static org.junit.Assert.assertNotNull;
++
+ /**
+  * Test case for HBaseStore.
+  */
+@@ -79,11 +78,11 @@
+   public GoraHBaseTestDriver getTestDriver() {
+     return (GoraHBaseTestDriver) testDriver;
+   }
+-  
++
+   @Override
+   public void assertSchemaExists(String schemaName) throws Exception {
+     HBaseAdmin admin = getTestDriver().getHbaseUtil().getHBaseAdmin();
+-    Assert.assertTrue(admin.tableExists(schemaName));
++    assertTrue(admin.tableExists(schemaName));
+   }
+ 
+   @Override
+@@ -92,11 +91,11 @@
+     Get get = new Get(Bytes.toBytes("com.example/http"));
+     org.apache.hadoop.hbase.client.Result result = table.get(get);
+     
+-    Assert.assertEquals(result.getFamilyMap(Bytes.toBytes("parsedContent")).size(), 4);
+-    Assert.assertTrue(Arrays.equals(result.getValue(Bytes.toBytes("parsedContent")
++    assertEquals(result.getFamilyMap(Bytes.toBytes("parsedContent")).size(), 4);
++    assertTrue(Arrays.equals(result.getValue(Bytes.toBytes("parsedContent")
+         ,Bytes.toBytes(0)), Bytes.toBytes("example")));
+     
+-    Assert.assertTrue(Arrays.equals(result.getValue(Bytes.toBytes("parsedContent")
++    assertTrue(Arrays.equals(result.getValue(Bytes.toBytes("parsedContent")
+         ,Bytes.toBytes(3)), Bytes.toBytes("example.com")));
+     table.close();
+   }
+@@ -115,8 +114,8 @@
+     org.apache.hadoop.hbase.client.Result result = table.get(get);
+     
+     byte[] actualBytes = result.getValue(Bytes.toBytes("content"), null);
+-    Assert.assertNotNull(actualBytes);
+-    Assert.assertTrue(Arrays.equals(contentBytes, actualBytes));
++    assertNotNull(actualBytes);
++    assertTrue(Arrays.equals(contentBytes, actualBytes));
+     table.close();    
+ 
+     // Since "content" is an optional field, we are forced to reopen the DataStore
+@@ -129,13 +128,13 @@
+     webPageStore.close() ;
+     webPageStore = testDriver.createDataStore(String.class, WebPage.class);
+     page = webPageStore.get("com.example/http") ;
+-    Assert.assertNull(page.getContent()) ;
++    assertNull(page.getContent()) ;
+     // Check directly with HBase
+     table = new HTable("WebPage");
+     get = new Get(Bytes.toBytes("com.example/http"));
+     result = table.get(get);
+     actualBytes = result.getValue(Bytes.toBytes("content"), null);
+-    Assert.assertNull(actualBytes);
++    assertNull(actualBytes);
+     table.close();
+     
+     // Test writing+reading an empty bytes field. FIELD in HBASE MUST become EMPTY (byte[0])
+@@ -145,16 +144,15 @@
+     webPageStore.close() ;
+     webPageStore = testDriver.createDataStore(String.class, WebPage.class);
+     page = webPageStore.get("com.example/http") ;
+-    Assert.assertTrue(Arrays.equals("".getBytes(),page.getContent().array())) ;
++    assertTrue(Arrays.equals("".getBytes(),page.getContent().array())) ;
+     // Check directly with HBase
+     table = new HTable("WebPage");
+     get = new Get(Bytes.toBytes("com.example/http"));
+     result = table.get(get);
+     actualBytes = result.getValue(Bytes.toBytes("content"), null);
+-    Assert.assertNotNull(actualBytes);
+-    Assert.assertEquals(0, actualBytes.length) ;
++    assertNotNull(actualBytes);
++    assertEquals(0, actualBytes.length) ;
+     table.close();
+-    
+   }
+   
+   /**
+@@ -180,8 +178,8 @@
+ 
+     byte[] bytesRead = result.getValue(Bytes.toBytes("content"), null);
+     
+-    Assert.assertNotNull(bytesRead) ;
+-    Assert.assertTrue(Arrays.equals(bytesRead, contentBytes));
++    assertNotNull(bytesRead) ;
++    assertTrue(Arrays.equals(bytesRead, contentBytes));
+   }
+   
+   /**
+@@ -208,8 +206,8 @@
+         
+     byte[] contentBytes = result.getValue(Bytes.toBytes("content"), null);
+ 
+-    Assert.assertNull(webPageStore.get("com.example/http", new String[]{"content"})) ;
+-    Assert.assertTrue(contentBytes == null || contentBytes.length == 0) ;
++    assertNull(webPageStore.get("com.example/http", new String[]{"content"})) ;
++    assertTrue(contentBytes == null || contentBytes.length == 0) ;
+   }
+   
+   @Override
+@@ -220,39 +218,39 @@
+     
+     byte[] anchor2Raw = result.getValue(Bytes.toBytes("outlinks")
+         , Bytes.toBytes("http://example2.com"));
+-    Assert.assertNotNull(anchor2Raw);
++    assertNotNull(anchor2Raw);
+     String anchor2 = Bytes.toString(anchor2Raw);
+-    Assert.assertEquals("anchor2", anchor2);
++    assertEquals("anchor2", anchor2);
+     table.close();
+   }
+ 
+ 
++  @Ignore("We need to skip this test since gora considers endRow inclusive, while its exclusive for HBase.")
+   @Override
+   public void testQueryEndKey() throws IOException {
+-    //We need to skip this test since gora considers endRow inclusive, while its exclusinve for HBase.
+     //TODO: We should raise an issue for HBase to allow us to specify if the endRow will be inclussive or exclusive.
+   }
+ 
++  @Ignore("We need to skip this test since gora considers endRow inclusive, while its exclusive for HBase.")
+   @Override
+   public void testQueryKeyRange() throws IOException {
+-    //We need to skip this test since gora considers endRow inclusive, while its exclusinve for HBase.
+-    //TODO: We should raise an issue for HBase to allow us to specify if the endRow will be inclussive or exclusive.
++     //TODO: We should raise an issue for HBase to allow us to specify if the endRow will be inclussive or exclusive.
+   }
+ 
++  @Ignore("We need to skip this test since gora considers endRow inclusive, while its exclusive for HBase.")
+   @Override
+   public void testDeleteByQuery() throws IOException {
+-    //We need to skip this test since gora considers endRow inclusive, while its exclusinve for HBase.
+-    //TODO: We should raise an issue for HBase to allow us to specify if the endRow will be inclussive or exclusive.
++   //TODO: We should raise an issue for HBase to allow us to specify if the endRow will be inclussive or exclusive.
+   }
+ 
+   public static void main(String[] args) throws Exception {
+     TestHBaseStore test = new TestHBaseStore();
+-    test.setUpClass();
++    setUpClass();
+     test.setUp();
+ 
+     test.testQuery();
+ 
+     test.tearDown();
+-    test.tearDownClass();
++    tearDownClass();
+   }
+ }
+Index: gora-hbase/src/test/java/org/apache/gora/hbase/util/TestHBaseByteInterface.java
+===================================================================
+--- gora-hbase/src/test/java/org/apache/gora/hbase/util/TestHBaseByteInterface.java	(revision 1497959)
++++ gora-hbase/src/test/java/org/apache/gora/hbase/util/TestHBaseByteInterface.java	(working copy)
+@@ -30,8 +30,7 @@
+ import org.apache.avro.util.Utf8;
+ import org.apache.gora.examples.generated.Employee;
+ import org.apache.gora.examples.generated.Metadata;
+-import org.apache.gora.examples.generated.TokenDatum;
+-import org.junit.Assert;
++import static org.junit.Assert.assertEquals;
+ import org.junit.Test;
+ 
+ public class TestHBaseByteInterface {
+@@ -58,10 +57,10 @@
+       Employee e2 = (Employee) HBaseByteInterface.fromBytes(Employee._SCHEMA, 
+           employerBytes);
+       
+-      Assert.assertEquals(name, e2.getName());
+-      Assert.assertEquals(dateOfBirth, e2.getDateOfBirth());
+-      Assert.assertEquals(salary, e2.getSalary());
+-      Assert.assertEquals(ssn, e2.getSsn());
++      assertEquals(name, e2.getName());
++      assertEquals(dateOfBirth, e2.getDateOfBirth());
++      assertEquals(salary, e2.getSalary());
++      assertEquals(ssn, e2.getSsn());
+       
+       
+       //metadata
+@@ -75,7 +74,7 @@
+       Metadata m2 = (Metadata) HBaseByteInterface.fromBytes(Metadata._SCHEMA, 
+           datumBytes);
+       
+-      Assert.assertEquals(value, m2.getFromData(key));
++      assertEquals(value, m2.getFromData(key));
+     }
+   }
+   
+@@ -109,7 +108,7 @@
+ 
+     // check results
+     for (Future<Integer> result : results) {
+-      Assert.assertEquals(0, (int) result.get());
++      assertEquals(0, (int) result.get());
+     }
+   }
+ 
