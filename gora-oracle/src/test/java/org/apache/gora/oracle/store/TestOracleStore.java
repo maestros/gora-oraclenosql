@@ -42,6 +42,7 @@ import static org.junit.Assert.assertEquals;
 
 /**
  * Test case for OracleNoSQLStore.
+ * @author Apostolos Giannakidis
  */
 public class TestOracleStore extends DataStoreTestBase {
 
@@ -145,6 +146,11 @@ public class TestOracleStore extends DataStoreTestBase {
     super.testSchemaExists();
   }
 
+  /**
+   * Asserts that the given schema name exists in the database.
+   * @param schemaName the schema name to be checked
+   * @throws Exception
+   */
   @Override
   public void assertSchemaExists(String schemaName) throws Exception {
 
@@ -164,6 +170,12 @@ public class TestOracleStore extends DataStoreTestBase {
     super.testPut();
   }
 
+  /**
+   * Asserts that the put() method works as expected by checking
+   * that the given employee object is correctly persisted.
+   * @param employee
+   * @throws IOException
+   */
   @Override
   public void assertPut(Employee employee) throws IOException {
     employeeStore.put(employee.getSsn().toString(),employee);
@@ -183,6 +195,11 @@ public class TestOracleStore extends DataStoreTestBase {
     super.testPutArray();
   }
 
+  /**
+   * Asserts that the array that was persisted by the testPutArray()
+   * have been persisted as expected.
+   * @throws IOException
+   */
   @Override
   public void assertPutArray() throws IOException {
     //set the major key components for retrieval of the correct record
@@ -269,6 +286,11 @@ public class TestOracleStore extends DataStoreTestBase {
     super.testPutMap();
   }
 
+  /**
+   * Asserts that the map that was persisted by the testPutMap()
+   * have been persisted as expected.
+   * @throws IOException
+   */
   @Override
   public void assertPutMap() throws IOException {
     //get the WebPage that was created in testPutMap()
